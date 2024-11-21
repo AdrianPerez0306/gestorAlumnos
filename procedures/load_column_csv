@@ -1,0 +1,63 @@
+-- PROCEDURE: public.csv_to_column(text, text, text)
+
+-- DROP PROCEDURE IF EXISTS public.csv_to_column(text, text, text);
+
+CREATE OR REPLACE PROCEDURE public.csv_to_column(
+	IN tabla_destino text,
+	IN columna_destino text,
+	IN ruta_csv text)
+LANGUAGE 'plpgsql'
+AS $BODY$
+DECLARE
+    f RECORD;
+	ya_existe BOOLEAN;
+BEGIN
+    -- Crear tabla temporal (se elimina automáticamente al finalizar la transacción)
+    CREATE TEMP TABLE IF NOT EXISTS tabla_temporal (
+        pivot TEXT NOT NULL
+    ) ON COMMIT DROP;
+
+    -- Cargar datos del CSV a la tabla temporal
+    EXECUTE format(
+        'COPY tabla_temporal (pivot) FROM %L WITH (FORMAT CSV, HEADER, DELIMITER '','')',
+        ruta_csv
+    );
+
+    -- Confirmación de inicio del proceso
+    RAISE NOTICE 'Starting load to table %', tabla_destino;
+
+    -- Iterar sobre los datos de la tabla temporal e insertarlos en la tabla destino
+    FOR f IN
+        SELECT pivot
+        FROM tabla_temporal
+    LOOP
+	
+       EXECUTE format(
+            'SELECT EXISTS (SELECT 1 FROM %I WHERE %I = $1)',
+            tabla_destino, columna_destino
+        ) INTO ya_existe
+        USING f.pivot;
+
+		IF NOT ya_existe THEN
+            EXECUTE format(
+                'INSERT INTO %I (%I) VALUES ($1)',
+                tabla_destino, columna_destino
+            ) USING f.pivot;
+
+            RAISE NOTICE 'Inserted new value: %', f.pivot;
+        ELSE
+            RAISE NOTICE 'Value already exists, not inserted: %', f.pivot;
+        END IF;
+    END LOOP;
+
+    -- Confirmación de fin del proceso
+    RAISE NOTICE 'Load finished for table %', tabla_destino;
+
+    -- Limpiar la tabla temporal
+    TRUNCATE TABLE tabla_temporal;
+
+END;
+$BODY$;
+ALTER PROCEDURE public.csv_to_column(text, text, text)
+    OWNER TO postgres;
+

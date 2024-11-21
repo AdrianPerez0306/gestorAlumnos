@@ -1,0 +1,11 @@
+SELECT 
+    a.nombre AS alumno,
+    s.nombre AS serie
+FROM 
+    alumno_recomienda_serie ars
+JOIN 
+    alumno a ON ars.id_alumno = a.id_alumno
+JOIN 
+    series s ON ars.id_serie = s.id_serie
+ORDER BY 
+    a.nombre, s.nombre;

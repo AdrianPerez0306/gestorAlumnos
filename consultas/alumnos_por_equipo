@@ -1,0 +1,7 @@
+SELECT a.*
+FROM public.alumno a
+JOIN ocupa rt ON a.id_alumno = rt.id_alumno
+JOIN grupos g ON rt.id_grupo = g.id_grupo
+WHERE g.nombre_grupo = 'dreamteam';
+
+

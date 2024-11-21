@@ -1,0 +1,1 @@
+CALL public.cargar_alumnos_csv('/home/the14th/Downloads/alumno.csv')

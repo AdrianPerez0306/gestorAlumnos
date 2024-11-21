@@ -1,0 +1,5 @@
+SELECT a.nombre as nombre_alumno, s.nombre_serie
+FROM public.alumno a
+JOIN alumno_recomienda_serie binaria  ON a.id_alumno = binaria.id_alumno
+JOIN series s ON binaria.id_serie = s.id_serie
+

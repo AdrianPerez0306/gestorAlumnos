@@ -1,0 +1,13 @@
+SELECT 
+    a.id_alumno, 
+    a.nombre, 
+    a.apellido, 
+    a.email
+FROM 
+    alumno a
+JOIN 
+    alumno_cursa_materia acm ON a.id_alumno = acm.id_alumno
+JOIN 
+    materia m ON acm.id_materia = m.id_materia
+WHERE 
+    m.nombre = 'caso';

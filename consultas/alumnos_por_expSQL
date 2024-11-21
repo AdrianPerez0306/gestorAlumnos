@@ -1,0 +1,3 @@
+SELECT id_alumno, nombre, apellido, email, exp_sql
+FROM alumno
+WHERE exp_no_sql = TRUE;

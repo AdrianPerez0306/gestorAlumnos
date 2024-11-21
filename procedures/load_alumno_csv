@@ -1,0 +1,233 @@
+-- PROCEDURE: public.cargar_alumnos_csv(text)
+
+-- DROP PROCEDURE IF EXISTS public.cargar_alumnos_csv(text);
+
+CREATE OR REPLACE PROCEDURE public.cargar_alumnos_csv(
+	IN ruta_csv text)
+LANGUAGE 'plpgsql'
+AS $BODY$
+DECLARE
+    f RECORD;               -- Registro temporal para iterar sobre los datos
+    id_alumno_aux INT;
+	id_hobby_aux INT;
+	id_localidad_aux INT;       -- Variable para almacenar el ID de localidad
+    id_profesion_aux INT;       -- Variable para almacenar el ID de profesion
+    id_materia_aux INT;         -- Variable para almacenar el ID de materia
+	id_serie_aux INT;
+	id_musica_aux INT;
+    materia_texto TEXT;     -- Variable para manejar materias como texto
+    hobby_texto TEXT;       -- Variable para manejar hobbies como texto
+    serie_texto TEXT;       -- Variable para manejar series como texto
+    musica_texto TEXT;      -- Variable para manejar musica como texto
+BEGIN
+    -- Crear tabla temporal para los alumnos
+    CREATE TEMP TABLE IF NOT EXISTS tabla_temporal_alumnos (
+        dni INT NOT NULL,
+        apellido TEXT,
+        nombre TEXT,
+        email TEXT,
+        rol TEXT,
+        profesion TEXT,
+        materias TEXT ARRAY,          -- Cambiado para trabajar como array
+        localidad TEXT,
+        hobbies TEXT[],           -- Cambiado para trabajar como array
+        mascotas TEXT,
+        musica TEXT[],            -- Cambiado para trabajar como array
+        series TEXT[],            -- Cambiado para trabajar como array
+        exp_sql BOOLEAN, 
+		exp_no_sql BOOLEAN, 
+		grupo TEXT
+    ) ON COMMIT DROP;
+
+    -- Cargar los datos de los alumnos desde el CSV a la tabla temporal
+    EXECUTE format(
+        'COPY tabla_temporal_alumnos (dni, apellido, nombre, email, rol, profesion, materias, localidad, hobbies, mascotas, musica, series, exp_sql, exp_no_sql, grupo) FROM %L WITH (FORMAT CSV, HEADER, DELIMITER '','')',
+        ruta_csv
+    );
+
+    -- Confirmación de inicio del proceso
+    RAISE NOTICE 'Starting load for alumnos from CSV';
+
+    -- Iterar sobre los datos de la tabla temporal
+    FOR f IN
+        SELECT dni, apellido, nombre, email, rol, profesion, materias, localidad, hobbies, mascotas, musica, series, exp_sql, exp_no_sql, grupo
+        FROM tabla_temporal_alumnos
+    LOOP
+		-- LOCALIDAD
+        -- Verificar si la localidad existe, si no, insertarla
+        SELECT id_localidad INTO id_localidad_aux
+        FROM localidad
+        WHERE nombre = f.localidad;
+        IF NOT FOUND THEN
+            INSERT INTO localidad (nombre) VALUES (f.localidad) RETURNING id_localidad INTO id_localidad_aux;
+        END IF;
+
+		-- PROFESION
+        -- -- Verificar si la profesion existe, si no, insertarla
+        SELECT id_profesion INTO id_profesion_aux
+        FROM profesion
+        WHERE nombre = f.profesion;
+	
+        IF NOT FOUND AND NOT NULL THEN
+            INSERT INTO profesion (nombre) VALUES (f.profesion) RETURNING id_profesion INTO id_profesion_aux;
+		END IF;
+
+		-- ALUMNO
+		-- Verificar si alumno existe, si no, insertarlo       
+		SELECT id_alumno INTO id_alumno_aux
+        FROM alumno
+        WHERE dni = f.dni;
+        IF NOT FOUND THEN
+			INSERT INTO alumno (dni, nombre, apellido, email, exp_sql, exp_no_sql, id_localidad, id_profesion)
+        	VALUES (f.dni, f.nombre, f.apellido, f.email, f.exp_sql, f.exp_no_sql, id_localidad_aux, id_profesion_aux);
+   			RAISE NOTICE 'Inserted new alumno: %, % , %', f.nombre, f.apellido, f.dni;
+		ELSE
+			RAISE NOTICE 'YA EXISTE: %', f.nombre;
+        END IF;
+        
+		-- MATERIA
+        -- Procesar las materias (array de materias)
+        FOREACH materia_texto IN ARRAY f.materias
+        LOOP
+			materia_texto := TRIM(BOTH '"' FROM TRIM(BOTH '''' FROM TRIM(materia_texto)));
+            -- Verificar si la materia existe, si no, insertarla
+            SELECT id_materia INTO id_materia_aux
+            FROM materia
+            WHERE nombre = materia_texto;
+
+            IF NOT FOUND THEN
+                INSERT INTO materia (nombre) VALUES (materia_texto) RETURNING id_materia INTO id_materia_aux;
+                RAISE NOTICE 'Inserted new materia: %', materia_texto;
+            END IF;
+
+			SELECT id_alumno INTO id_alumno_aux
+        	FROM alumno
+        	WHERE dni = f.dni AND email = f.email;
+			
+			IF EXISTS (
+			    SELECT 1
+			    FROM alumno_cursa_materia
+			    WHERE id_alumno = id_alumno_aux AND id_materia = id_materia_aux
+			) THEN
+	    		-- Si la relación ya existe, imprimir un mensaje
+			    RAISE NOTICE 'La relación entre alumno % y materia % ya existe', id_alumno_aux, id_materia_aux;
+			ELSE
+		    	-- Si no existe, insertar la relación
+		    	INSERT INTO alumno_cursa_materia (id_alumno, id_materia)
+		    	VALUES (id_alumno_aux, id_materia_aux);
+			END IF;
+			
+        END LOOP;
+
+        -- HOBBIES
+        -- Procesar las materias (array de materias)
+        IF f.hobbies IS NOT NULL THEN
+			FOREACH hobby_texto IN ARRAY f.hobbies
+        	LOOP
+				-- SE pasa de 'hobby' a hobby
+				hobby_texto := TRIM(BOTH '"' FROM TRIM(BOTH '''' FROM TRIM(hobby_texto)));
+				
+	            -- Verificar si el hobby existe, si no, INSERT
+	            SELECT id_hobby INTO id_hobby_aux
+	            FROM hobby
+	            WHERE nombre = hobby_texto;
+	            IF NOT FOUND THEN
+	                INSERT INTO hobby (nombre) VALUES (hobby_texto) RETURNING id_hobby INTO id_hobby_aux;
+	                RAISE NOTICE 'Inserted new hobby: %', hobby_texto;
+	            END IF;
+							
+				IF EXISTS (
+				    SELECT 1
+				    FROM alumno_practica_hobby
+				    WHERE id_alumno = id_alumno_aux AND id_hobby = id_hobby_aux
+				) THEN
+		    		-- Si la relación ya existe, imprimir un mensaje
+				    RAISE NOTICE 'La relación entre alumno % y hobby % ya existe', id_alumno_aux, id_hobby_aux;
+				ELSE
+			    	-- Si no existe, insertar la relación
+			    	INSERT INTO alumno_practica_hobby (id_hobby, id_alumno)
+			    	VALUES (id_hobby_aux, id_alumno_aux);
+				END IF;
+	            
+        	END LOOP;
+			
+		END IF;
+
+		-- SERIES
+        -- Procesar las series (array de series)
+        IF f.series IS NOT NULL THEN
+			FOREACH serie_texto IN ARRAY f.series
+        	LOOP
+				serie_texto := TRIM(BOTH '"' FROM TRIM(BOTH '''' FROM TRIM(serie_texto)));
+	            -- Verificar si la materia existe, si no, insertarla
+	            SELECT id_serie INTO id_serie_aux
+	            FROM series
+	            WHERE nombre = serie_texto;
+	
+	            IF NOT FOUND THEN
+	                INSERT INTO series (nombre) VALUES (serie_texto) RETURNING id_serie INTO id_serie_aux;
+	                RAISE NOTICE 'Inserted new serie: %', serie_texto;
+	            END IF;
+							
+				IF EXISTS (
+				    SELECT 1
+				    FROM alumno_recomienda_serie
+				    WHERE id_alumno = id_alumno_aux AND id_serie = id_serie_aux
+				) THEN
+		    		-- Si la relación ya existe, imprimir un mensaje
+				    RAISE NOTICE 'La relación entre alumno % y serie % ya existe', id_alumno_aux, id_serie_aux;
+				ELSE
+			    	-- Si no existe, insertar la relación
+			    	INSERT INTO alumno_recomienda_serie (id_serie, id_alumno)
+			    	VALUES (id_serie_aux, id_alumno_aux);
+				END IF;
+	        
+        	END LOOP;
+			
+		END IF;
+
+		-- MUSICA
+        -- Procesar la música (array de música)
+        IF f.musica IS NOT NULL THEN
+			FOREACH musica_texto IN ARRAY f.musica
+        	LOOP
+				musica_texto := TRIM(BOTH '"' FROM TRIM(BOTH '''' FROM TRIM(musica_texto)));
+	            -- Verificar si la materia existe, si no, insertarla
+	            SELECT id_musica INTO id_musica_aux
+	            FROM musica
+	            WHERE nombre = musica_texto;
+	
+	            IF NOT FOUND THEN
+	                INSERT INTO musica (nombre) VALUES (musica_texto) RETURNING id_musica INTO id_musica_aux;
+	                RAISE NOTICE 'Inserted new musica: %', musica_texto;
+	            END IF;
+							
+				IF EXISTS (
+				    SELECT 1
+				    FROM alumno_recomienda_musica
+				    WHERE id_alumno = id_alumno_aux AND id_musica = id_musica_aux
+				) THEN
+		    		-- Si la relación ya existe, imprimir un mensaje
+				    RAISE NOTICE 'La relación entre alumno % y musica % ya existe', id_alumno_aux, id_musica_aux;
+				ELSE
+			    	-- Si no existe, insertar la relación
+			    	INSERT INTO alumno_recomienda_musica (id_musica, id_alumno)
+			    	VALUES (id_musica_aux, id_alumno_aux);
+				END IF;
+	        
+        	END LOOP;
+			
+		END IF;
+    END LOOP;
+
+    -- Confirmación de fin del proceso
+    RAISE NOTICE 'Load finished for alumnos from CSV';
+
+    -- Limpiar la tabla temporal
+    TRUNCATE TABLE tabla_temporal_alumnos;
+
+END;
+$BODY$;
+ALTER PROCEDURE public.cargar_alumnos_csv(text)
+    OWNER TO postgres;
+

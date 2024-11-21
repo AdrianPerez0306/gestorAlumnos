@@ -32,21 +32,3 @@ ORDER BY
     l.nombre_localidad, cantidad_alumnos DESC;
     
 
-
-CONSULTA 2
-
-SELECT 
-    a.nombre,
-    COUNT(ma.id_materia) AS cantidad_materias,
-    CASE WHEN a.exp_sql THEN 'Sí' ELSE 'No' END AS exp_relacional,
-    CASE WHEN a.exp_no_sql THEN 'Sí' ELSE 'No' END AS exp_no_relacional
-FROM 
-    alumno a
-JOIN 
-    alumno_cursa_materia ma ON a.id_alumno = ma.id_alumno
-GROUP BY 
-    a.id_alumno
-ORDER BY 
-    cantidad_materias DESC
-LIMIT 10;
-

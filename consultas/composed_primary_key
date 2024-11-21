@@ -1,0 +1,5 @@
+-- Cambiar la clave primaria a una compuesta
+ALTER TABLE pertenece DROP CONSTRAINT alumno_recomienda_serie_pkey;
+
+-- Crear una clave primaria compuesta
+ALTER TABLE alumno_recomienda_serie ADD PRIMARY KEY (id_alumno, id_serie);

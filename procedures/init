@@ -1,0 +1,132 @@
+-- PROCEDURE: public.createInitialTables()
+
+-- DROP PROCEDURE IF EXISTS public."createInitialTables"();
+
+CREATE OR REPLACE PROCEDURE public."createInitialTables"(
+	)
+LANGUAGE 'sql'
+AS $BODY$
+-- ----------------
+-- TABLA PROFESIONES
+-- ----------------
+CREATE TABLE IF NOT EXISTS profesion(
+    id_profesion SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL UNIQUE
+);
+-- ----------------
+-- TABLA LOCALIDADES
+-- ----------------
+CREATE TABLE IF NOT EXISTS localidad(
+    id_localidad SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL UNIQUE
+);
+-- ----------------
+-- TABLA ALUMNOS <-- localidad, profesion
+-- ----------------
+CREATE TABLE IF NOT EXISTS alumno(
+    id_alumno SERIAL PRIMARY KEY,
+    dni INT NOT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    apellido VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    exp_sql BOOLEAN NOT NULL,
+    exp_no_sql BOOLEAN NOT NULL,
+    id_profesion INT,
+    id_localidad INT NOT NULL,
+    CONSTRAINT fk_profesion FOREIGN KEY (id_profesion) REFERENCES profesion(id_profesion) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_localidad FOREIGN KEY (id_localidad) REFERENCES localidad(id_localidad) ON DELETE CASCADE ON UPDATE CASCADE,
+	UNIQUE(dni, email)
+);
+-- ----------------
+-- TABLA MATERIAS, ALUMNO_CURSA_MATERIAS
+-- ----------------
+CREATE TABLE IF NOT EXISTS materia(
+    id_materia SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL UNIQUE
+);
+CREATE TABLE IF NOT EXISTS alumno_cursa_materia(
+    id_materia INT,
+    id_alumno INT,
+	CONSTRAINT alumno_cursa_materia_pkey PRIMARY KEY (id_alumno, id_materia),
+    CONSTRAINT fk_alumno FOREIGN KEY (id_alumno) REFERENCES alumno(id_alumno) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_materia FOREIGN KEY (id_materia) REFERENCES materia(id_materia) ON DELETE CASCADE ON UPDATE CASCADE
+);
+-- ----------------
+-- TABLA ROLES
+-- ----------------
+CREATE TABLE IF NOT EXISTS rol(
+	id_rol SERIAL PRIMARY KEY,
+ 	nombre VARCHAR(100) NOT NULL UNIQUE
+);
+-- ----------------
+-- TABLA GRUPOS
+-- ----------------
+CREATE TABLE IF NOT EXISTS grupo(
+    id_grupo SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL UNIQUE
+);
+-- ----------------
+-- TABLA alumno_grupo_rol <-- alumno, grupo, rol
+-- ----------------
+CREATE TABLE IF NOT EXISTS pertenece (
+    id_alumno INT,
+    id_grupo INT,
+    id_rol INT NOT NULL,
+    CONSTRAINT pk_pertenece PRIMARY KEY (id_alumno, id_grupo),
+    CONSTRAINT fk_rol FOREIGN KEY (id_rol) REFERENCES rol(id_rol) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_grupo FOREIGN KEY (id_grupo) REFERENCES grupo(id_grupo) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_alumno FOREIGN KEY (id_alumno) REFERENCES alumno(id_alumno) ON DELETE CASCADE ON UPDATE CASCADE
+);
+-- ----------------
+-- TABLA ALUMNO_MASCOTAS <- alumno
+-- ----------------
+CREATE TABLE IF NOT EXISTS mascotas(
+    id_mascota SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    cuidador INT NOT NULL,
+    CONSTRAINT fk_cuidador FOREIGN KEY (cuidador) REFERENCES alumno(id_alumno) ON DELETE CASCADE ON UPDATE CASCADE
+);
+-- ----------------
+-- TABLA HOBBIES
+-- ----------------
+CREATE TABLE IF NOT EXISTS hobby(
+    id_hobby SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL UNIQUE
+);
+CREATE TABLE IF NOT EXISTS alumno_practica_hobby(
+    id_hobby INT PRIMARY KEY,
+    id_alumno INT NOT NULL,
+    CONSTRAINT fk_alumno FOREIGN KEY (id_alumno) REFERENCES alumno(id_alumno) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_hobby FOREIGN KEY (id_hobby) REFERENCES hobby(id_hobby) ON DELETE CASCADE ON UPDATE CASCADE
+);
+-- ----------------
+-- TABLA SERIE, ALUMNO_RECOMIENDA_SERIE
+-- ----------------
+
+CREATE TABLE IF NOT EXISTS series(
+    id_serie SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL UNIQUE
+);
+CREATE TABLE IF NOT EXISTS alumno_recomienda_serie(
+    id_serie INT PRIMARY KEY,
+    id_alumno INT NOT NULL,
+    CONSTRAINT fk_alumno FOREIGN KEY (id_alumno) REFERENCES alumno(id_alumno) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_serie FOREIGN KEY (id_serie) REFERENCES series(id_serie) ON DELETE CASCADE ON UPDATE CASCADE
+);
+-- ----------------
+-- TABLA MUSICA, ALUMNO_RECOMIENDA_MUSICA
+-- ----------------
+CREATE TABLE IF NOT EXISTS musica(
+    id_musica SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL UNIQUE
+);
+CREATE TABLE IF NOT EXISTS alumno_recomienda_musica(
+    id_musica INT PRIMARY KEY,
+    id_alumno INT NOT NULL,
+    CONSTRAINT fk_alumno FOREIGN KEY (id_alumno) REFERENCES alumno(id_alumno) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_musica FOREIGN KEY (id_musica) REFERENCES musica(id_musica) ON DELETE CASCADE ON UPDATE CASCADE
+);
+$BODY$;
+ALTER PROCEDURE public."createInitialTables"()
+    OWNER TO postgres;
+

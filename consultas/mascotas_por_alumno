@@ -1,0 +1,13 @@
+SELECT 
+    a.id_alumno,
+    a.nombre AS alumno_nombre,
+    a.apellido AS alumno_apellido,
+    m.tipo AS mascota_tipo
+FROM 
+    alumno a
+JOIN 
+    mascotaS m
+ON 
+    a.id_alumno = m.id_cuidador
+WHERE 
+    m.tipo = 'perro';
