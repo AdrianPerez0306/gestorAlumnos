@@ -1,0 +1,386 @@
+-- PROCEDURE: public.cargar_alumnos_csv(text)
+
+-- DROP PROCEDURE IF EXISTS public.cargar_alumnos_csv(text);
+
+CREATE OR REPLACE PROCEDURE public.cargar_alumnos_csv(
+	IN ruta_csv text)
+LANGUAGE 'plpgsql'
+AS $BODY$
+DECLARE
+    f RECORD;               -- Registro temporal para iterar sobre los datos
+    id_alumno_aux INT;
+	id_localidad_aux INT;       -- Variable para almacenar el ID de localidad
+    id_profesion_aux INT;       -- Variable para almacenar el ID de profesion
+    id_materia_aux INT;         -- Variable para almacenar el ID de materia
+    materia_texto TEXT;     -- Variable para manejar materias como texto
+    hobby_texto TEXT;       -- Variable para manejar hobbies como texto
+    serie_texto TEXT;       -- Variable para manejar series como texto
+    musica_texto TEXT;      -- Variable para manejar musica como texto
+BEGIN
+    -- Crear tabla temporal para los alumnos
+    CREATE TEMP TABLE IF NOT EXISTS tabla_temporal_alumnos (
+        dni INT NOT NULL,
+        apellido TEXT,
+        nombre TEXT,
+        email TEXT,
+        rol TEXT,
+        profesion TEXT,
+        materias TEXT ARRAY,          -- Cambiado para trabajar como array
+        localidad TEXT,
+        hobbies TEXT[],           -- Cambiado para trabajar como array
+        mascotas TEXT,
+        musica TEXT[],            -- Cambiado para trabajar como array
+        series TEXT[],            -- Cambiado para trabajar como array
+        exp_sql BOOLEAN, 
+		exp_no_sql BOOLEAN, 
+		grupo TEXT
+    ) ON COMMIT DROP;
+
+    -- Cargar los datos de los alumnos desde el CSV a la tabla temporal
+    EXECUTE format(
+        'COPY tabla_temporal_alumnos (dni, apellido, nombre, email, rol, profesion, materias, localidad, hobbies, mascotas, musica, series, exp_sql, exp_no_sql, grupo) FROM %L WITH (FORMAT CSV, HEADER, DELIMITER '','')',
+        ruta_csv
+    );
+
+    -- Confirmación de inicio del proceso
+    RAISE NOTICE 'Starting load for alumnos from CSV';
+
+    -- Iterar sobre los datos de la tabla temporal
+    FOR f IN
+        SELECT dni, apellido, nombre, email, rol, profesion, materias, localidad, hobbies, mascotas, musica, series, exp_sql, exp_no_sql, grupo
+        FROM tabla_temporal_alumnos
+    LOOP
+        -- Verificar si la localidad existe, si no, insertarla
+        SELECT id_localidad INTO id_localidad_aux
+        FROM localidad
+        WHERE nombre = f.localidad;
+        IF NOT FOUND THEN
+            INSERT INTO localidad (nombre) VALUES (f.localidad) RETURNING id_localidad INTO id_localidad_aux;
+        END IF;
+		
+        -- -- Verificar si la profesion existe, si no, insertarla
+        SELECT id_profesion INTO id_profesion_aux
+        FROM profesion
+        WHERE nombre = f.profesion;
+	
+        IF NOT FOUND AND NOT NULL THEN
+            INSERT INTO profesion (nombre) VALUES (f.profesion) RETURNING id_profesion INTO id_profesion_aux;
+		END IF;
+		
+		-- Insertar el alumno en la tabla de alumnos con las claves foráneas
+        
+		SELECT id_alumno INTO id_alumno_aux
+        FROM alumno
+        WHERE dni = f.dni;
+        IF NOT FOUND THEN
+			INSERT INTO alumno (dni, nombre, apellido, email, exp_sql, exp_no_sql, id_localidad, id_profesion)
+        	VALUES (f.dni, f.nombre, f.apellido, f.email, f.exp_sql, f.exp_no_sql, id_localidad_aux, id_profesion_aux);
+   			RAISE NOTICE 'Inserted new alumno: %', f.nombre;
+		ELSE
+			RAISE NOTICE 'YA EXISTE: %', f.nombre;
+        END IF;
+        
+		
+        -- -- Confirmación de inserción del alumno
+        -- RAISE NOTICE 'Inserted alumno: % %', f.nombre, f.apellido;
+
+        -- -- Procesar las materias (array de materias)
+        -- FOREACH materia_texto IN ARRAY f.materias
+        -- LOOP
+        --     -- Verificar si la materia existe, si no, insertarla
+        --     SELECT id_materia INTO id_materia
+        --     FROM materias
+        --     WHERE nombre_materia = materia_texto;
+
+        --     IF NOT FOUND THEN
+        --         INSERT INTO materias (nombre_materia) VALUES (materia_texto) RETURNING id_materia INTO id_materia;
+        --         RAISE NOTICE 'Inserted new materia: %', materia_texto;
+        --     END IF;
+
+        --     -- Insertar la relación en la tabla intermedia alumno_materia
+        --     INSERT INTO alumno_materia (alumno_id, materia_id)
+        --     SELECT a.id_alumno, id_materia
+        --     FROM alumnos a
+        --     WHERE a.dni = f.dni;
+
+        --     -- Confirmación de relación insertada
+        --     RAISE NOTICE 'Assigned materia % to alumno %', materia_texto, f.dni;
+        -- END LOOP;
+
+        -- -- Procesar los hobbies (array de hobbies)
+        -- FOREACH hobby_texto IN ARRAY f.hobbies
+        -- LOOP
+        --     -- Lógica de procesamiento de hobbies si es necesario (ejemplo: insertarlos en la tabla hobbies)
+        --     -- Puedes insertar en una tabla similar a como se hace con las materias si es necesario.
+        --     RAISE NOTICE 'Processing hobby: %', hobby_texto;
+        -- END LOOP;
+
+        -- -- Procesar las series (array de series)
+        -- FOREACH serie_texto IN ARRAY f.series
+        -- LOOP
+        --     -- Lógica de procesamiento de series si es necesario (ejemplo: insertarlas en la tabla series)
+        --     -- Puedes insertarlas o simplemente procesarlas si ya existen
+        --     RAISE NOTICE 'Processing series: %', serie_texto;
+        -- END LOOP;
+
+        -- -- Procesar la música (array de música)
+        -- FOREACH musica_texto IN ARRAY f.musica
+        -- LOOP
+        --     -- Lógica de procesamiento de música si es necesario (ejemplo: insertarla en la tabla música)
+        --     -- Puedes insertarla o simplemente procesarla si ya existe
+        --     RAISE NOTICE 'Processing musica: %', musica_texto;
+        -- END LOOP;
+    END LOOP;
+
+    -- Confirmación de fin del proceso
+    RAISE NOTICE 'Load finished for alumnos from CSV';
+
+    -- Limpiar la tabla temporal
+    TRUNCATE TABLE tabla_temporal_alumnos;
+
+END;
+$BODY$;
+ALTER PROCEDURE public.cargar_alumnos_csv(text)
+    OWNER TO postgres;
+
+
+################################################################################################################################################
+################################################################################################################################################
+-- PROCEDURE: public.createInitialTables()
+
+-- DROP PROCEDURE IF EXISTS public."createInitialTables"();
+
+CREATE OR REPLACE PROCEDURE public."createInitialTables"(
+	)
+LANGUAGE 'sql'
+AS $BODY$
+-- ----------------
+-- TABLA PROFESIONES
+-- ----------------
+CREATE TABLE IF NOT EXISTS profesion(
+    id_profesion SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL UNIQUE
+);
+-- ----------------
+-- TABLA LOCALIDADES
+-- ----------------
+CREATE TABLE IF NOT EXISTS localidad(
+    id_localidad SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL UNIQUE
+);
+-- ----------------
+-- TABLA ALUMNOS <-- localidad, profesion
+-- ----------------
+CREATE TABLE IF NOT EXISTS alumno(
+    id_alumno SERIAL PRIMARY KEY,
+    dni INT NOT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    apellido VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    exp_sql BOOLEAN NOT NULL,
+    exp_no_sql BOOLEAN NOT NULL,
+    id_profesion INT,
+    id_localidad INT NOT NULL,
+    CONSTRAINT fk_profesion FOREIGN KEY (id_profesion) REFERENCES profesion(id_profesion) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_localidad FOREIGN KEY (id_localidad) REFERENCES localidad(id_localidad) ON DELETE CASCADE ON UPDATE CASCADE,
+	UNIQUE(dni, email)
+);
+-- ----------------
+-- TABLA MATERIAS, ALUMNO_CURSA_MATERIAS
+-- ----------------
+CREATE TABLE IF NOT EXISTS materia(
+    id_materia SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL UNIQUE
+);
+CREATE TABLE IF NOT EXISTS alumno_cursa_materia(
+    id_materia INT PRIMARY KEY,
+    id_alumno INT,
+    CONSTRAINT fk_alumno FOREIGN KEY (id_alumno) REFERENCES alumno(id_alumno) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_materia FOREIGN KEY (id_materia) REFERENCES materia(id_materia) ON DELETE CASCADE ON UPDATE CASCADE
+);
+-- ----------------
+-- TABLA ROLES
+-- ----------------
+CREATE TABLE IF NOT EXISTS rol(
+	id_rol SERIAL PRIMARY KEY,
+ 	nombre VARCHAR(100) NOT NULL UNIQUE
+);
+-- ----------------
+-- TABLA GRUPOS
+-- ----------------
+CREATE TABLE IF NOT EXISTS grupo(
+    id_grupo SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL UNIQUE
+);
+-- ----------------
+-- TABLA alumno_grupo_rol <-- alumno, grupo, rol
+-- ----------------
+CREATE TABLE IF NOT EXISTS pertenece (
+    id_alumno INT,
+    id_grupo INT,
+    id_rol INT NOT NULL,
+    CONSTRAINT pk_pertenece PRIMARY KEY (id_alumno, id_grupo),
+    CONSTRAINT fk_rol FOREIGN KEY (id_rol) REFERENCES rol(id_rol) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_grupo FOREIGN KEY (id_grupo) REFERENCES grupo(id_grupo) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_alumno FOREIGN KEY (id_alumno) REFERENCES alumno(id_alumno) ON DELETE CASCADE ON UPDATE CASCADE
+);
+-- ----------------
+-- TABLA ALUMNO_MASCOTAS <- alumno
+-- ----------------
+CREATE TABLE IF NOT EXISTS mascotas(
+    id_mascota SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    cuidador INT NOT NULL,
+    CONSTRAINT fk_cuidador FOREIGN KEY (cuidador) REFERENCES alumno(id_alumno) ON DELETE CASCADE ON UPDATE CASCADE
+);
+-- ----------------
+-- TABLA HOBBIES
+-- ----------------
+CREATE TABLE IF NOT EXISTS hobby(
+    id_hobby SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL UNIQUE
+);
+CREATE TABLE IF NOT EXISTS alumno_practica_hobby(
+    id_hobby INT PRIMARY KEY,
+    id_alumno INT NOT NULL,
+    CONSTRAINT fk_alumno FOREIGN KEY (id_alumno) REFERENCES alumno(id_alumno) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_hobby FOREIGN KEY (id_hobby) REFERENCES hobby(id_hobby) ON DELETE CASCADE ON UPDATE CASCADE
+);
+-- ----------------
+-- TABLA SERIE, ALUMNO_RECOMIENDA_SERIE
+-- ----------------
+
+CREATE TABLE IF NOT EXISTS series(
+    id_serie SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL UNIQUE
+);
+CREATE TABLE IF NOT EXISTS alumno_recomienda_serie(
+    id_serie INT PRIMARY KEY,
+    id_alumno INT NOT NULL,
+    CONSTRAINT fk_alumno FOREIGN KEY (id_alumno) REFERENCES alumno(id_alumno) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_serie FOREIGN KEY (id_serie) REFERENCES series(id_serie) ON DELETE CASCADE ON UPDATE CASCADE
+);
+-- ----------------
+-- TABLA MUSICA, ALUMNO_RECOMIENDA_MUSICA
+-- ----------------
+CREATE TABLE IF NOT EXISTS musica(
+    id_musica SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL UNIQUE
+);
+CREATE TABLE IF NOT EXISTS alumno_recomienda_musica(
+    id_musica INT PRIMARY KEY,
+    id_alumno INT NOT NULL,
+    CONSTRAINT fk_alumno FOREIGN KEY (id_alumno) REFERENCES alumno(id_alumno) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_musica FOREIGN KEY (id_musica) REFERENCES musica(id_musica) ON DELETE CASCADE ON UPDATE CASCADE
+);
+$BODY$;
+ALTER PROCEDURE public."createInitialTables"()
+    OWNER TO postgres;
+
+
+
+################################################################################################################################################
+################################################################################################################################################
+
+
+-- PROCEDURE: public.csv_to_column(text, text, text)
+
+-- DROP PROCEDURE IF EXISTS public.csv_to_column(text, text, text);
+
+CREATE OR REPLACE PROCEDURE public.csv_to_column(
+	IN tabla_destino text,
+	IN columna_destino text,
+	IN ruta_csv text)
+LANGUAGE 'plpgsql'
+AS $BODY$
+DECLARE
+    f RECORD;
+	ya_existe BOOLEAN;
+BEGIN
+    -- Crear tabla temporal (se elimina automáticamente al finalizar la transacción)
+    CREATE TEMP TABLE IF NOT EXISTS tabla_temporal (
+        pivot TEXT NOT NULL
+    ) ON COMMIT DROP;
+
+    -- Cargar datos del CSV a la tabla temporal
+    EXECUTE format(
+        'COPY tabla_temporal (pivot) FROM %L WITH (FORMAT CSV, HEADER, DELIMITER '','')',
+        ruta_csv
+    );
+
+    -- Confirmación de inicio del proceso
+    RAISE NOTICE 'Starting load to table %', tabla_destino;
+
+    -- Iterar sobre los datos de la tabla temporal e insertarlos en la tabla destino
+    FOR f IN
+        SELECT pivot
+        FROM tabla_temporal
+    LOOP
+	
+       EXECUTE format(
+            'SELECT EXISTS (SELECT 1 FROM %I WHERE %I = $1)',
+            tabla_destino, columna_destino
+        ) INTO ya_existe
+        USING f.pivot;
+
+		IF NOT ya_existe THEN
+            EXECUTE format(
+                'INSERT INTO %I (%I) VALUES ($1)',
+                tabla_destino, columna_destino
+            ) USING f.pivot;
+
+            RAISE NOTICE 'Inserted new value: %', f.pivot;
+        ELSE
+            RAISE NOTICE 'Value already exists, not inserted: %', f.pivot;
+        END IF;
+    END LOOP;
+
+    -- Confirmación de fin del proceso
+    RAISE NOTICE 'Load finished for table %', tabla_destino;
+
+    -- Limpiar la tabla temporal
+    TRUNCATE TABLE tabla_temporal;
+
+END;
+$BODY$;
+ALTER PROCEDURE public.csv_to_column(text, text, text)
+    OWNER TO postgres;
+
+
+################################################################################################################################################
+################################################################################################################################################
+-- PROCEDURE: public.full_truncate()
+
+-- DROP PROCEDURE IF EXISTS public.full_truncate();
+
+CREATE OR REPLACE PROCEDURE public.full_truncate(
+	)
+LANGUAGE 'sql'
+AS $BODY$
+TRUNCATE public.alumno RESTART IDENTITY CASCADE;
+TRUNCATE public.grupo RESTART IDENTITY CASCADE;
+TRUNCATE public.hobby RESTART IDENTITY CASCADE;
+TRUNCATE public.localidad RESTART IDENTITY CASCADE;
+TRUNCATE public.materia RESTART IDENTITY CASCADE;
+TRUNCATE public.musica RESTART IDENTITY CASCADE;
+TRUNCATE public.profesion RESTART IDENTITY CASCADE;
+TRUNCATE public.rol RESTART IDENTITY CASCADE;
+TRUNCATE public.series RESTART IDENTITY CASCADE;
+$BODY$;
+ALTER PROCEDURE public.full_truncate()
+    OWNER TO postgres;
+
+
+
+
+
+################################################################################################################################################
+################################################################################################################################################
+
+
+
+
+
+
+################################################################################################################################################
+################################################################################################################################################

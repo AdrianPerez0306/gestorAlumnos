@@ -1,0 +1,6 @@
+INSERT INTO public.hobbies(
+	id_hobbie, nombre_hobbie)
+	VALUES (20, 'leer')
+	ON CONFLICT (nombre_hobbie) DO NOTHING;
+
+	

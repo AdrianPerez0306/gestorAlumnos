@@ -1,0 +1,31 @@
+CREATE TABLE IF NOT EXISTS tabla_temporal
+(
+    nombre_serie character(100) NOT NULL
+);
+
+TRUNCATE tabla_temporal;
+
+COPY tabla_temporal
+FROM '/home/the14th/Downloads/series.csv'
+DELIMITER ','
+CSV HEADER;
+
+DO $$
+DECLARE 
+	f RECORD;
+BEGIN
+    FOR f IN
+	SELECT nombre_serie FROM tabla_temporal
+	WHERE NOT EXISTS( SELECT * FROM series)
+	LOOP
+        RAISE NOTICE '%', f.nombre_serie;
+		CALL asd(f.nombre_serie);
+		IF f.nombre_serie = 'supernatural' THEN
+			RAISE NOTICE 'MOCK';
+		END IF;
+    END LOOP;
+END $$
+
+
+PARA TRUNCAR TABLAS Y REESTABLECER EL AUTOINCREMENT A 0
+TRUNCATE public.series RESTART IDENTITY CASCADE;
