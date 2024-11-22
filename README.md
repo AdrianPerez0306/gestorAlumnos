@@ -1,7 +1,8 @@
 # Sistema gestor de alumnos UNSAM
 Contexto teorico. ![link](https://github.com/AdrianPerez0306/gestorAlumnos/blob/42ace063c036c55184657ba6f19447c937ccb2e3/TP%20Base%20de%20datos%202024%20UNSAM.pdf)
 
-[Cypress](https://www.cypress.io) en un framework de test e2e, para testear aplicaciones que corren en un navegador.
+[Cypress](![image](https://github.com/user-attachments/assets/8d23e6bb-fe21-435e-8048-9a024c992041)
+) en un framework de test e2e, para testear aplicaciones que corren en un navegador.
 
 ### ¿Y pero ésto no es lo mismo que los test unitarios con jest? :thinking: :thinking: :thinking: 
 
