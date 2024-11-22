@@ -1,5 +1,5 @@
 # Sistema gestor de alumnos UNSAM
-Contexto teorico. ![link](TP Base de datos 2024 UNSAM.pdf)
+Contexto teorico. ![link](https://github.com/AdrianPerez0306/gestorAlumnos/blob/42ace063c036c55184657ba6f19447c937ccb2e3/TP%20Base%20de%20datos%202024%20UNSAM.pdf)
 
 [Cypress](https://www.cypress.io) en un framework de test e2e, para testear aplicaciones que corren en un navegador.
 
