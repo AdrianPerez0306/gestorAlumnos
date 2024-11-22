@@ -1,8 +1,7 @@
 # Sistema gestor de alumnos UNSAM
 Contexto teorico. ![link](https://github.com/AdrianPerez0306/gestorAlumnos/blob/42ace063c036c55184657ba6f19447c937ccb2e3/TP%20Base%20de%20datos%202024%20UNSAM.pdf)
 
-![image](https://github.com/user-attachments/assets/27a3ff0b-410a-4128-adc2-1f1714e79533)
- en un framework de test e2e, para testear aplicaciones que corren en un navegador.
+
 
 ### ¿Y pero ésto no es lo mismo que los test unitarios con jest? :thinking: :thinking: :thinking: 
 
@@ -23,8 +22,9 @@ python3 pip install pandas
 ```python
 import pandas
 ```
-Una vez tenemos todo instalado, ejecutamos los `script.py` para comenzar el preprocesado.
+Una vez tenemos instalado `python`, podemos comenzar el preprocesado. Partiendo del archivo ![`raw-data.csv`](preprocessing/raw-data.csv) tenemos labels/columnas de la siguiente forma:
 
+![image](https://github.com/user-attachments/assets/27a3ff0b-410a-4128-adc2-1f1714e79533)
 
 Si es la primera vez que corremos el proyecto, nos va a crear un montón de ejemplos de cómo testear, en caso contrario nos va abre el ambiente de desarrollo de cypress que tiene la siguiente pinta:
 
