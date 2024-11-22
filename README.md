@@ -25,6 +25,18 @@ Abrimos [`preprocessing.py`](preprocessing/preprocessing.py) y ejecutamos el scr
 python preprocessing.py
 ```
 Esto generara una serie de `archivos.csv`, que corresponden a los datos necesarios para realizar la carga dentro del sistema `PostgreSQL`
+NOTA: Dentro script `preprocessing.py` se encuentra el path donde se descargaran los archivos. MODIFICAR ESTE PATH SEGUN SU O.S
+
+![image](https://github.com/user-attachments/assets/a36596e0-0898-4533-9ef2-7624dd4ab945)
+
+Una vez ejecutado, en el `path` que haya configurado en el script `preprocessing.py`, deberian aparecer una serie de archivos:
+
+![image](https://github.com/user-attachments/assets/9d63581d-5389-4f5b-9fb0-9c8134cf3d9c)
+
+
+
+
+
 Si es la primera vez que corremos el proyecto, nos va a crear un montón de ejemplos de cómo testear, en caso contrario nos va abre el ambiente de desarrollo de cypress que tiene la siguiente pinta:
 
 ![video](video/cypress2022.gif)
