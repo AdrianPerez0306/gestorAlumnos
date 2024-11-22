@@ -2,11 +2,8 @@
 [![Build React App](https://github.com/uqbar-project/eg-conversor-react/actions/workflows/build.yml/badge.svg?branch=feature%2Fcypress)](https://github.com/uqbar-project/eg-conversor-react/actions/workflows/build.yml) ![coverage](./badges/coverage/coverage.svg)
 
 
-# Conversor ReactJS
-
-Si estás buscando la explicación original podés encontrarla en el branch [master](https://github.com/uqbar-project/eg-conversor-react).
-
-![video](video/demo2020.gif)
+# Sistema gestor de alumnos UNSAM
+Contexto teorico. ![link](https://drive.google.com/file/d/1EVKeJsFYojVfUUROWaSpytBr12A9aNEa/view?usp=sharing)
 
 [Cypress](https://www.cypress.io) en un framework de test e2e, para testear aplicaciones que corren en un navegador.
 
@@ -19,14 +16,14 @@ Si estás buscando la explicación original podés encontrarla en el branch [mas
 Tal cual nos explica en el [get-started](https://docs.cypress.io/guides/getting-started/installing-cypress.html#npm-install), instalamos la dependencia de cypress
 
 ```bash
-npm install cypress --save-dev
+pip install python
 ```
 
+```python
+import pandas
+```
 Ahora le decimos a cypress que nos cree los archivos necesarios para comenzar a testear, tal como dice en la web podemos usar algunos de estos comandos
 
-```bash
-npx cypress open
-```
 
 Si es la primera vez que corremos el proyecto, nos va a crear un montón de ejemplos de cómo testear, en caso contrario nos va abre el ambiente de desarrollo de cypress que tiene la siguiente pinta:
 
