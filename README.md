@@ -18,7 +18,6 @@ Tal cual nos explica en el [get-started](https://docs.cypress.io/guides/getting-
 ```bash
 pip install python
 ```
-
 ```python
 import pandas
 ```
