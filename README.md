@@ -78,13 +78,15 @@ IMPORTANTE: Si quiere ejecutar las `procedures_calls` primero debe copiar los ar
 
 ##### c) Ejecutar querys.
 Una vez en el panel de querys, procedemos a ejecutar las querys. En este caso pordemos importarla seleccionando `Open file` en la query tool.
+Aqui, ya importado el query correspondiente, ejecutamos dandole al boton de play. Ya ejecutados los querys se pueden realizar consultar.
+Para realizar consultas se pueden repetir los pasos `b` y `c`, cargando los querys dentro del folder `consultas`
 
 ![image](https://github.com/user-attachments/assets/1f95b4b1-b4a9-47b4-90a8-c91ae1c65272)
 
 
-
-i) Ejecutar todos los querys en el folder `procedures_calls`
-![image](https://github.com/user-attachments/assets/4b53691a-54c0-4a78-8cfc-3573c5f7b54d)
+##### d) Respuesta de las querys.
+A partir de aqui es cuestion de jugar con las consultar, modificar el sistema de gestion de base de datos, y extender las tablas, consultas, views, prodecures, etc...,  segun la necesidad.
+![image](https://github.com/user-attachments/assets/8c8355fe-a92c-43b9-880b-ae5b0069f10b)
 
 
 ### 2 - Importar el archivo `SERVER.json`.
