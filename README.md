@@ -1,9 +1,5 @@
-
-[![Build React App](https://github.com/uqbar-project/eg-conversor-react/actions/workflows/build.yml/badge.svg?branch=feature%2Fcypress)](https://github.com/uqbar-project/eg-conversor-react/actions/workflows/build.yml) ![coverage](./badges/coverage/coverage.svg)
-
-
 # Sistema gestor de alumnos UNSAM
-Contexto teorico. ![link](https://drive.google.com/file/d/1EVKeJsFYojVfUUROWaSpytBr12A9aNEa/view?usp=sharing)
+Contexto teorico. ![link](TP Base de datos 2024 UNSAM.pdf)
 
 [Cypress](https://www.cypress.io) en un framework de test e2e, para testear aplicaciones que corren en un navegador.
 
