@@ -1,12 +1,6 @@
 # Sistema gestor de alumnos UNSAM
 Contexto teorico. ![link](https://github.com/AdrianPerez0306/gestorAlumnos/blob/42ace063c036c55184657ba6f19447c937ccb2e3/TP%20Base%20de%20datos%202024%20UNSAM.pdf)
 
-
-
-### ¿Y pero ésto no es lo mismo que los test unitarios con jest? :thinking: :thinking: :thinking: 
-
-¡No! la diferencia que tenemos con los test unitarios, es que estos solo testean los componentes por separado, en cambio acá nosotros levantamos un navegador y podemos testear cómo interactúan nuestros componentes entre sí, solo guiándonos por el HTML de nuestro sitio.
-
 ## Instalación :hammer_and_wrench: 
 Este desarrolo fue realizado en un entorno de `OS debian ubuntu 22.04`, [`python 3.11`](https://www.pgadmin.org/) en adelante, [`PostgreSQL`](https://www.postgresql.org/) con [`PgAdmin`](https://www.pgadmin.org/).
 ```bash
@@ -22,9 +16,11 @@ python3 pip install pandas
 ```python
 import pandas
 ```
-Una vez tenemos instalado `python`, podemos comenzar el preprocesado. Partiendo del archivo ![`raw-data.csv`](preprocessing/raw-data.csv) tenemos labels/columnas de la siguiente forma:
+Una vez tenemos instalado `python`, podemos comenzar el preprocesado. Partiendo del archivo [`raw-data.csv`](preprocessing/raw-data.csv) tenemos labels/columnas de la siguiente forma:
 
 ![image](https://github.com/user-attachments/assets/27a3ff0b-410a-4128-adc2-1f1714e79533)
+
+Abrimos [`preprocessing.py`](preprocessing/preprocessing.py) y modificamos el
 
 Si es la primera vez que corremos el proyecto, nos va a crear un montón de ejemplos de cómo testear, en caso contrario nos va abre el ambiente de desarrollo de cypress que tiene la siguiente pinta:
 
