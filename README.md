@@ -66,137 +66,34 @@ Con el server ya creado procedemos a utilizar la query tool que provee `PostgreS
 ![image](https://github.com/user-attachments/assets/dc254c26-a05d-4f2e-af2e-e15b8c49ddc9)
 
 
-##### b) Ejecutar querys.
+##### b) Abrir querys tool.
 Una vez en el panel de querys, procedemos a ejecutar las querys. 
 i) Ejecutar todos los querys en el folder `procedures_calls`
+
 IMPORTANTE: Si quiere ejecutar las `procedures_calls` primero debe copiar los archivos dentro de `procedures` y ejecutarlos dentro de la query tool.
 
   `call_init` -> `call_load_column` -> `call_load_alumnos`
   Una vez ejecutados los querys, deberia estar creadas las tablas y cargados los datos de los archivos correspondientes.
   A partir de aqui, ya se pueden realizar consultas.
-  
+
+##### c) Ejecutar querys.
+Una vez en el panel de querys, procedemos a ejecutar las querys. En este caso pordemos importarla seleccionando `Open file` en la query tool.
+
+![image](https://github.com/user-attachments/assets/1f95b4b1-b4a9-47b4-90a8-c91ae1c65272)
+
+
+
+i) Ejecutar todos los querys en el folder `procedures_calls`
 ![image](https://github.com/user-attachments/assets/4b53691a-54c0-4a78-8cfc-3573c5f7b54d)
 
 
 ### 2 - Importar el archivo `SERVER.json`.
-Dentro de `pgAdmin` seleccionar `Tools`-> `Import/Export server` -> Seleccionar `SERVER.json` ->  
+Dentro de `pgAdmin` seleccionar `Tools`-> `Import/Export server` -> Seleccionar `SERVER.json`
 
-Si es la primera vez que corremos el proyecto, nos va a crear un montón de ejemplos de cómo testear, en caso contrario nos va abre el ambiente de desarrollo de cypress que tiene la siguiente pinta:
+CHEQUEAR CHEQUEAR CHEQUEAR CHEQUEAR CHEQUEAR CHEQUEAR CHEQUEAR CHEQUEAR CHEQUEAR CHEQUEAR CHEQUEAR CHEQUEAR CHEQUEAR CHEQUEAR CHEQUEAR CHEQUEAR
 
-![video](video/cypress2022.gif)
+CHEQUEAR CHEQUEAR CHEQUEAR CHEQUEAR CHEQUEAR CHEQUEAR CHEQUEAR CHEQUEAR CHEQUEAR CHEQUEAR CHEQUEAR CHEQUEAR CHEQUEAR CHEQUEAR CHEQUEAR CHEQUEAR
 
-En la primera pantalla nos muestra los archivos de tests que escribimos, los clickeamos y abre un navegador y empieza a correr nuestros tests. Pero ¡ojo! tenemos que tener nuestra aplicación levantada para poder correr los tests
+CHEQUEAR CHEQUEAR CHEQUEAR CHEQUEAR CHEQUEAR CHEQUEAR CHEQUEAR CHEQUEAR CHEQUEAR CHEQUEAR CHEQUEAR CHEQUEAR CHEQUEAR CHEQUEAR CHEQUEAR CHEQUEAR
 
-¿Y cómo se hace eso ?
 
-```bash
-npm run start
-```
-
-Una vez levantado podemos correr el comando `open` de cypress, pero antes debemos modificar el archivo *cypress.config.js* para que la url base de los tests sea `localhost:3000` (puerto en el cual levantamos nuestra app).
-
-```js
-const { defineConfig } = require('cypress')
-
-module.exports = defineConfig({
-  video: false,
-  e2e: {
-    // We've imported your old cypress plugins here.
-    // You may want to clean this up later by importing these.
-    setupNodeEvents(on, config) {
-      return require('./cypress/plugins/index.js')(on, config)
-    },
-    baseUrl: 'http://localhost:3000',
-  },
-})
-```
-
-ponemos `video` en `false` para que no grabe los tests 
-
-### Cómo se escribe un test
-
-Vamos a seguir usando los `describe` y `it` de jest y los hooks cómo  `before, beforeAll, beforeEach` , solo que ahora utilizaremos el objeto `cy` que nos va a permitir testear
-
-```javascript
-/// <reference types="Cypress" />
-
-const MILLAS_SELECTOR = '[data-testid=millas]'
-const KMS_SELECTOR = '[data-testid=kms]'
-const ERROR_SELECTOR = '[data-testid=error]'
-
-describe('Caso feliz', () => {
-  before(() => {
-    cy.visit('/')
-  })
-  it('escribimos un numero positivo de millas a convertir', () => {
-    cy.get(MILLAS_SELECTOR)
-      .type(10).should('have.value', '10')
-  })
-  it('y se tranforma a kilometros', () => {
-    cy.get(KMS_SELECTOR).contains('16,093')
-  })
-
-})
-describe('Caso 0', () => {
-  before(() => {
-    cy.visit('/')
-  })
-  it('escribimos 0 en las millas a convertir', () => {
-    cy.get(MILLAS_SELECTOR)
-      .type(0).should('have.value', '0')
-  })
-  it('y en los kilometros vemos 0', () => {
-    cy.get(KMS_SELECTOR).contains('0')
-  })
-
-})
-describe('Caso alfabetico', () => {
-  before(() => {
-    cy.visit('/')
-  })
-  it('escribimos un valor que no es un numero en el input', () => {
-    cy.get(MILLAS_SELECTOR)
-      .type('1.*-*/*').should('have.value', '1.*-*/*')
-  })
-  it('y aparece un cartel de error avisandonos que no es un input valido', () => {
-    cy.get(ERROR_SELECTOR)
-  })
-
-})
-```
-
-Separamos los describes por *flujos* de nuestra aplicación y hacemos uso de `data-testid` para no acoplarnos a los atributos de html.
-
-La línea `/// <reference types="Cypress" />` a comienzo de nuestro archivo de tests activa nuestro IDE para que utilice sugerencias sobre las funcionalidades de cypress.
-
-La funciones que usamos de cypress son:
-
-- `cy.visit` => para visitar una url de nuestra aplicación
-- `cy.get` => obtenemos un elemento del DOM en base a un selector
-- `cy.type` => escribimos en un input
-
-## ¿Y Github Actions? :construction_worker_man: 
-
-Bueno cypress en su [pagina](https://docs.cypress.io/guides/guides/continuous-integration.html#Setting-up-CI) nos comenta cómo integrar con nuestro CI de turno, estos test e2e.
-
-Nosotros nos basamos en [este archivo](https://github.com/cypress-io/cypress-example-kitchensink/blob/master/.github/workflows/chrome-headless.yml) para crear el nuestro, borrando código redudante y demás yerbas.
-
-Pero como hemos vimos antes,tenemos que tener la aplicación corriendo para poder testearla.... y ¿cómo hacemos eso en CI?
-
-Fácil, creamos dentro de nuestro `package.json` los siguientes comandos:
-
-```json
-{
-  "cy:open": "cypress open",
-  "cy:run": "cypress run",
-  "cy:ci": "start-server-and-test start 3000 cy:run",
-  "cy:verify": "cypress verify",
-}
-```
-
-- `npm run cy:ci` levanta nuestra aplicación y espera a que este completamente levantada para seguir al próximo paso (usamos una biblioteca llamada start-server-and-test para esperar)
-
-para instalar `start-server-and-test` : `npm install wait-on -D`
-
-- `yarn run cy:ci` corre nuestros tests en modo Continuous Integration
-- `yarn run cy:verify` chequea la instalación de CI en el ambiente
