@@ -20,8 +20,11 @@ Una vez tenemos instalado `python`, podemos comenzar el preprocesado. Partiendo 
 
 ![image](https://github.com/user-attachments/assets/27a3ff0b-410a-4128-adc2-1f1714e79533)
 
-Abrimos [`preprocessing.py`](preprocessing/preprocessing.py) y modificamos el
-
+Abrimos [`preprocessing.py`](preprocessing/preprocessing.py) y ejecutamos el script:
+```bash
+python preprocessing.py
+```
+Esto generara una serie de `archivos.csv`, que corresponden a los datos necesarios para realizar la carga dentro del sistema `PostgreSQL`
 Si es la primera vez que corremos el proyecto, nos va a crear un montón de ejemplos de cómo testear, en caso contrario nos va abre el ambiente de desarrollo de cypress que tiene la siguiente pinta:
 
 ![video](video/cypress2022.gif)
