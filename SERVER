@@ -1,0 +1,2265 @@
+--
+-- PostgreSQL database cluster dump
+--
+
+-- Started on 2024-11-22 01:52:41 -03
+
+SET default_transaction_read_only = off;
+
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+
+--
+-- Roles
+--
+
+CREATE ROLE postgres;
+ALTER ROLE postgres WITH SUPERUSER INHERIT CREATEROLE CREATEDB LOGIN REPLICATION BYPASSRLS PASSWORD 'SCRAM-SHA-256$4096:TcM0tmz298lTBJNY9NchvA==$UsNp+98z3ztMdNOONWc9REMDj45MclIV8MjDfnRVE0Q=:+jCGqbiWh216MFppolCy/5aQQpL/oHzj9hMCrv6ZvAc=';
+
+--
+-- User Configurations
+--
+
+
+
+
+
+
+
+
+--
+-- Databases
+--
+
+--
+-- Database "template1" dump
+--
+
+\connect template1
+
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 17.0 (Ubuntu 17.0-1.pgdg22.04+1)
+-- Dumped by pg_dump version 17.0 (Ubuntu 17.0-1.pgdg22.04+1)
+
+-- Started on 2024-11-22 01:52:41 -03
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+-- Completed on 2024-11-22 01:52:41 -03
+
+--
+-- PostgreSQL database dump complete
+--
+
+--
+-- Database "alumnos" dump
+--
+
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 17.0 (Ubuntu 17.0-1.pgdg22.04+1)
+-- Dumped by pg_dump version 17.0 (Ubuntu 17.0-1.pgdg22.04+1)
+
+-- Started on 2024-11-22 01:52:41 -03
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- TOC entry 3560 (class 1262 OID 16388)
+-- Name: alumnos; Type: DATABASE; Schema: -; Owner: postgres
+--
+
+CREATE DATABASE alumnos WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE_PROVIDER = libc LOCALE = 'en_US.UTF-8';
+
+
+ALTER DATABASE alumnos OWNER TO postgres;
+
+\connect alumnos
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- TOC entry 267 (class 1255 OID 16706)
+-- Name: asd(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.asd() RETURNS void
+    LANGUAGE sql
+    AS $$CREATE TABLE IF NOT EXISTS tabla_temporal
+(
+    nombre_serie character(100) NOT NULL
+)
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public.tabla_temporal
+    OWNER to postgres;
+
+TRUNCATE tabla_temporal;
+
+
+COPY tabla_temporal
+FROM '/home/the14th/Downloads/series.csv'
+DELIMITER ','
+CSV HEADER;
+
+SELECT * FROM tabla_temporal;
+
+-- FOR targe IN SELECT * FROM tabla_temporal
+-- LOOP
+-- 	public.asd(target)
+-- END LOOP	
+$$;
+
+
+ALTER FUNCTION public.asd() OWNER TO postgres;
+
+--
+-- TOC entry 269 (class 1255 OID 17349)
+-- Name: cargar_alumnos_csv(text); Type: PROCEDURE; Schema: public; Owner: postgres
+--
+
+CREATE PROCEDURE public.cargar_alumnos_csv(IN ruta_csv text)
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    f RECORD;               -- Registro temporal para iterar sobre los datos
+    id_alumno_aux INT;
+	id_grupo_aux INT;
+	id_rol_aux INT;
+	id_hobby_aux INT;
+	id_localidad_aux INT;       -- Variable para almacenar el ID de localidad
+    id_profesion_aux INT;       -- Variable para almacenar el ID de profesion
+    id_materia_aux INT;         -- Variable para almacenar el ID de materia
+	id_serie_aux INT;
+	id_musica_aux INT;
+	grupo_texto TEXT;
+	rol_texto TEXT;
+    materia_texto TEXT;     -- Variable para manejar materias como texto
+    hobby_texto TEXT;       -- Variable para manejar hobbies como texto
+    serie_texto TEXT;       -- Variable para manejar series como texto
+    musica_texto TEXT;      -- Variable para manejar musica como texto
+	mascota_texto TEXT;
+BEGIN
+    -- Crear tabla temporal para los alumnos
+    CREATE TEMP TABLE IF NOT EXISTS tabla_temporal_alumnos (
+        dni INT NOT NULL,
+        apellido TEXT,
+        nombre TEXT,
+        email TEXT,
+        rol TEXT,
+        profesion TEXT,
+        materias TEXT ARRAY,          -- Cambiado para trabajar como array
+        localidad TEXT,
+        hobbies TEXT[],           -- Cambiado para trabajar como array
+        mascotas TEXT[],
+        musica TEXT[],            -- Cambiado para trabajar como array
+        series TEXT[],            -- Cambiado para trabajar como array
+        exp_sql BOOLEAN, 
+		exp_no_sql BOOLEAN, 
+		grupo TEXT
+    ) ON COMMIT DROP;
+
+    -- Cargar los datos de los alumnos desde el CSV a la tabla temporal
+    EXECUTE format(
+        'COPY tabla_temporal_alumnos (dni, apellido, nombre, email, rol, profesion, materias, localidad, hobbies, mascotas, musica, series, exp_sql, exp_no_sql, grupo) FROM %L WITH (FORMAT CSV, HEADER, DELIMITER '','')',
+        ruta_csv
+    );
+
+    -- Confirmación de inicio del proceso
+    RAISE NOTICE 'Starting load for alumnos from CSV';
+
+    -- Iterar sobre los datos de la tabla temporal
+    FOR f IN
+        SELECT dni, apellido, nombre, email, rol, profesion, materias, localidad, hobbies, mascotas, musica, series, exp_sql, exp_no_sql, grupo
+        FROM tabla_temporal_alumnos
+    LOOP
+		-- LOCALIDAD
+        -- Verificar si la localidad existe, si no, insertarla
+        SELECT id_localidad INTO id_localidad_aux
+        FROM localidad
+        WHERE nombre = f.localidad;
+        IF NOT FOUND THEN
+            INSERT INTO localidad (nombre) VALUES (f.localidad) RETURNING id_localidad INTO id_localidad_aux;
+        END IF;
+
+		-- PROFESION
+        -- -- Verificar si la profesion existe, si no, insertarla
+        SELECT id_profesion INTO id_profesion_aux
+        FROM profesion
+        WHERE nombre = f.profesion;
+	
+        IF NOT FOUND AND NOT NULL THEN
+            INSERT INTO profesion (nombre) VALUES (f.profesion) RETURNING id_profesion INTO id_profesion_aux;
+		END IF;
+
+		-- ALUMNO
+		-- Verificar si alumno existe, si no, insertarlo       
+		SELECT id_alumno INTO id_alumno_aux
+        FROM alumno
+        WHERE dni = f.dni;
+        IF NOT FOUND THEN
+			INSERT INTO alumno (dni, nombre, apellido, email, exp_sql, exp_no_sql, id_localidad, id_profesion)
+        	VALUES (f.dni, f.nombre, f.apellido, f.email, f.exp_sql, f.exp_no_sql, id_localidad_aux, id_profesion_aux);
+   			RAISE NOTICE 'Inserted new alumno: %, % , %', f.nombre, f.apellido, f.dni;
+		ELSE
+			RAISE NOTICE 'YA EXISTE: %', f.nombre;
+        END IF;
+        
+		-- MATERIA
+        -- Procesar las materias (array de materias)
+        FOREACH materia_texto IN ARRAY f.materias
+        LOOP
+			materia_texto := TRIM(BOTH '"' FROM TRIM(BOTH '''' FROM TRIM(materia_texto)));
+            -- Verificar si la materia existe, si no, insertarla
+            SELECT id_materia INTO id_materia_aux
+            FROM materia
+            WHERE nombre = materia_texto;
+
+            IF NOT FOUND THEN
+                INSERT INTO materia (nombre) VALUES (materia_texto) RETURNING id_materia INTO id_materia_aux;
+                RAISE NOTICE 'Inserted new materia: %', materia_texto;
+            END IF;
+
+			SELECT id_alumno INTO id_alumno_aux
+        	FROM alumno
+        	WHERE dni = f.dni AND email = f.email;
+			
+			IF EXISTS (
+			    SELECT 1
+			    FROM alumno_cursa_materia
+			    WHERE id_alumno = id_alumno_aux AND id_materia = id_materia_aux
+			) THEN
+	    		-- Si la relación ya existe, imprimir un mensaje
+			    RAISE NOTICE 'La relación entre alumno % y materia % ya existe', id_alumno_aux, id_materia_aux;
+			ELSE
+		    	-- Si no existe, insertar la relación
+		    	INSERT INTO alumno_cursa_materia (id_alumno, id_materia)
+		    	VALUES (id_alumno_aux, id_materia_aux);
+			END IF;
+			
+        END LOOP;
+
+		-- GRUPO
+		-- 1. Verificar si el grupo existe, si no, insertarlo
+        grupo_texto := TRIM(f.grupo); -- Limpiar datos si es necesario
+        IF grupo_texto IS NOT NULL THEN
+            SELECT id_grupo INTO id_grupo_aux
+            FROM grupo
+            WHERE nombre = grupo_texto;
+
+            IF NOT FOUND THEN
+                INSERT INTO grupo (nombre) VALUES (grupo_texto) RETURNING id_grupo INTO id_grupo_aux;
+                RAISE NOTICE 'Inserted new group: %', grupo_texto;
+            END IF;
+        ELSE
+            RAISE NOTICE 'Grupo is NULL for alumno: %', f.dni;
+        END IF;
+		
+		-- ROL
+        -- 2. Verificar si el rol existe, si no, insertarlo
+        rol_texto := TRIM(f.rol); -- Limpiar datos si es necesario
+        IF rol_texto IS NOT NULL THEN
+            SELECT id_rol INTO id_rol_aux
+            FROM rol
+            WHERE nombre = rol_texto;
+
+            IF NOT FOUND THEN
+                RAISE NOTICE 'Role % NOT FOUND on public.rol', rol_texto;
+            END IF;
+        ELSE
+            RAISE NOTICE 'Rol is NULL for alumno: %', f.dni;
+        END IF;
+
+		-- TERNARIA ALUMNO_GRUPO_ROL
+        -- 3. Verificar si el alumno ya está en la relación con el grupo y el rol
+        SELECT id_alumno INTO id_alumno_aux
+        FROM alumno
+        WHERE dni = f.dni;
+
+        IF id_alumno_aux IS NOT NULL AND id_grupo_aux IS NOT NULL AND id_rol_aux IS NOT NULL THEN
+            IF EXISTS (
+                SELECT 1
+                FROM pertenece
+                WHERE id_alumno = id_alumno_aux AND id_grupo = id_grupo_aux AND id_rol = id_rol_aux
+            ) THEN
+                RAISE NOTICE 'La relación ya existe: Alumno %, Grupo %, Rol %', id_alumno_aux, id_grupo_aux, id_rol_aux;
+            ELSE
+                INSERT INTO pertenece (id_alumno, id_grupo, id_rol)
+                VALUES (id_alumno_aux, id_grupo_aux, id_rol_aux);
+                RAISE NOTICE 'Inserted relationship: Alumno %, Grupo %, Rol %', id_alumno_aux, id_grupo_aux, id_rol_aux;
+            END IF;
+        ELSE
+            RAISE NOTICE 'Datos incompletos para relación: Alumno %, Grupo %, Rol %', id_alumno_aux, id_grupo_aux, id_rol_aux;
+        END IF;
+		
+        -- HOBBIES
+        -- Procesar las materias (array de materias)
+        IF f.hobbies IS NOT NULL THEN
+			FOREACH hobby_texto IN ARRAY f.hobbies
+        	LOOP
+				-- SE pasa de 'hobby' a hobby
+				hobby_texto := TRIM(BOTH '"' FROM TRIM(BOTH '''' FROM TRIM(hobby_texto)));
+				
+	            -- Verificar si el hobby existe, si no, INSERT
+	            SELECT id_hobby INTO id_hobby_aux
+	            FROM hobby
+	            WHERE nombre = hobby_texto;
+	            IF NOT FOUND THEN
+	                INSERT INTO hobby (nombre) VALUES (hobby_texto) RETURNING id_hobby INTO id_hobby_aux;
+	                RAISE NOTICE 'Inserted new hobby: %', hobby_texto;
+	            END IF;
+							
+				IF EXISTS (
+				    SELECT 1
+				    FROM alumno_practica_hobby
+				    WHERE id_alumno = id_alumno_aux AND id_hobby = id_hobby_aux
+				) THEN
+		    		-- Si la relación ya existe, imprimir un mensaje
+				    RAISE NOTICE 'La relación entre alumno % y hobby % ya existe', id_alumno_aux, id_hobby_aux;
+				ELSE
+			    	-- Si no existe, insertar la relación
+			    	INSERT INTO alumno_practica_hobby (id_hobby, id_alumno)
+			    	VALUES (id_hobby_aux, id_alumno_aux);
+				END IF;
+	            
+        	END LOOP;
+			
+		END IF;
+
+		-- SERIES
+        -- Procesar las series (array de series)
+        IF f.series IS NOT NULL THEN
+			FOREACH serie_texto IN ARRAY f.series
+        	LOOP
+				serie_texto := TRIM(BOTH '"' FROM TRIM(BOTH '''' FROM TRIM(serie_texto)));
+	            -- Verificar si la materia existe, si no, insertarla
+	            SELECT id_serie INTO id_serie_aux
+	            FROM series
+	            WHERE nombre = serie_texto;
+	
+	            IF NOT FOUND THEN
+	                INSERT INTO series (nombre) VALUES (serie_texto) RETURNING id_serie INTO id_serie_aux;
+	                RAISE NOTICE 'Inserted new serie: %', serie_texto;
+	            END IF;
+							
+				IF EXISTS (
+				    SELECT 1
+				    FROM alumno_recomienda_serie
+				    WHERE id_alumno = id_alumno_aux AND id_serie = id_serie_aux
+				) THEN
+		    		-- Si la relación ya existe, imprimir un mensaje
+				    RAISE NOTICE 'La relación entre alumno % y serie % ya existe', id_alumno_aux, id_serie_aux;
+				ELSE
+			    	-- Si no existe, insertar la relación
+			    	INSERT INTO alumno_recomienda_serie (id_serie, id_alumno)
+			    	VALUES (id_serie_aux, id_alumno_aux);
+				END IF;
+	        
+        	END LOOP;
+			
+		END IF;
+
+		-- MUSICA
+        -- Procesar la música (array de música)
+        IF f.musica IS NOT NULL THEN
+			FOREACH musica_texto IN ARRAY f.musica
+        	LOOP
+				musica_texto := TRIM(BOTH '"' FROM TRIM(BOTH '''' FROM TRIM(musica_texto)));
+	            -- Verificar si la materia existe, si no, insertarla
+	            SELECT id_musica INTO id_musica_aux
+	            FROM musica
+	            WHERE nombre = musica_texto;
+	
+	            IF NOT FOUND THEN
+	                INSERT INTO musica (nombre) VALUES (musica_texto) RETURNING id_musica INTO id_musica_aux;
+	                RAISE NOTICE 'Inserted new musica: %', musica_texto;
+	            END IF;
+							
+				IF EXISTS (
+				    SELECT 1
+				    FROM alumno_recomienda_musica
+				    WHERE id_alumno = id_alumno_aux AND id_musica = id_musica_aux
+				) THEN
+		    		-- Si la relación ya existe, imprimir un mensaje
+				    RAISE NOTICE 'La relación entre alumno % y musica % ya existe', id_alumno_aux, id_musica_aux;
+				ELSE
+			    	-- Si no existe, insertar la relación
+			    	INSERT INTO alumno_recomienda_musica (id_musica, id_alumno)
+			    	VALUES (id_musica_aux, id_alumno_aux);
+				END IF;
+	        
+        	END LOOP;
+			
+		END IF;
+		
+        -- MASCOTAS
+		-- -------------
+        IF f.mascotas IS NOT NULL THEN
+            -- Iterar sobre el array de mascotas
+            FOREACH mascota_texto IN ARRAY f.mascotas
+            LOOP
+                IF mascota_texto IS NOT NULL THEN
+                    -- Limpiar texto de comillas
+                    mascota_texto := TRIM(BOTH '"' FROM TRIM(BOTH '''' FROM TRIM(mascota_texto)));
+
+                    -- Insertar mascota directamente asociada al alumno
+                    INSERT INTO mascotas (tipo, id_cuidador)
+                    VALUES (mascota_texto, id_alumno_aux);
+                    RAISE NOTICE 'Inserted mascota: tipo %, cuidador %', mascota_texto, id_alumno_aux;
+                END IF;
+            END LOOP;
+		ELSE
+        	RAISE NOTICE 'Alumno % no tiene mascotas', id_alumno_aux;
+        END IF;
+    END LOOP;
+	
+    -- Confirmación de fin del proceso
+    RAISE NOTICE 'Load finished for alumnos from CSV';
+
+    -- Limpiar la tabla temporal
+    TRUNCATE TABLE tabla_temporal_alumnos;
+
+END;
+$$;
+
+
+ALTER PROCEDURE public.cargar_alumnos_csv(IN ruta_csv text) OWNER TO postgres;
+
+--
+-- TOC entry 268 (class 1255 OID 16783)
+-- Name: createInitialTables(); Type: PROCEDURE; Schema: public; Owner: postgres
+--
+
+CREATE PROCEDURE public."createInitialTables"()
+    LANGUAGE sql
+    AS $$-- ----------------
+-- TABLA PROFESIONES
+-- ----------------
+CREATE TABLE IF NOT EXISTS profesion(
+    id_profesion SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL UNIQUE
+);
+-- ----------------
+-- TABLA LOCALIDADES
+-- ----------------
+CREATE TABLE IF NOT EXISTS localidad(
+    id_localidad SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL UNIQUE
+);
+-- ----------------
+-- TABLA ALUMNOS <-- localidad, profesion
+-- ----------------
+CREATE TABLE IF NOT EXISTS alumno(
+    id_alumno SERIAL PRIMARY KEY,
+    dni INT NOT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    apellido VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    exp_sql BOOLEAN NOT NULL,
+    exp_no_sql BOOLEAN NOT NULL,
+    id_profesion INT,
+    id_localidad INT NOT NULL,
+    CONSTRAINT fk_profesion FOREIGN KEY (id_profesion) REFERENCES profesion(id_profesion) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_localidad FOREIGN KEY (id_localidad) REFERENCES localidad(id_localidad) ON DELETE CASCADE ON UPDATE CASCADE,
+	UNIQUE(dni, email)
+);
+-- ----------------
+-- TABLA MATERIAS, ALUMNO_CURSA_MATERIAS
+-- ----------------
+CREATE TABLE IF NOT EXISTS materia(
+    id_materia SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL UNIQUE
+);
+CREATE TABLE IF NOT EXISTS alumno_cursa_materia(
+    id_materia INT,
+    id_alumno INT,
+	CONSTRAINT alumno_cursa_materia_pkey PRIMARY KEY (id_alumno, id_materia),
+    CONSTRAINT fk_alumno FOREIGN KEY (id_alumno) REFERENCES alumno(id_alumno) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_materia FOREIGN KEY (id_materia) REFERENCES materia(id_materia) ON DELETE CASCADE ON UPDATE CASCADE
+);
+-- ----------------
+-- TABLA ROLES
+-- ----------------
+CREATE TABLE IF NOT EXISTS rol(
+	id_rol SERIAL PRIMARY KEY,
+ 	nombre VARCHAR(100) NOT NULL UNIQUE
+);
+-- ----------------
+-- TABLA GRUPOS
+-- ----------------
+CREATE TABLE IF NOT EXISTS grupo(
+    id_grupo SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL UNIQUE
+);
+-- ----------------
+-- TABLA alumno_grupo_rol <-- alumno, grupo, rol
+-- ----------------
+CREATE TABLE IF NOT EXISTS pertenece (
+    id_alumno INT,
+    id_grupo INT,
+    id_rol INT NOT NULL,
+    CONSTRAINT pk_pertenece PRIMARY KEY (id_alumno, id_grupo),
+    CONSTRAINT fk_rol FOREIGN KEY (id_rol) REFERENCES rol(id_rol) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_grupo FOREIGN KEY (id_grupo) REFERENCES grupo(id_grupo) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_alumno FOREIGN KEY (id_alumno) REFERENCES alumno(id_alumno) ON DELETE CASCADE ON UPDATE CASCADE
+);
+-- ----------------
+-- TABLA ALUMNO_MASCOTAS <- alumno
+-- ----------------
+CREATE TABLE IF NOT EXISTS mascotas(
+    id_mascota SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    cuidador INT NOT NULL,
+    CONSTRAINT fk_cuidador FOREIGN KEY (cuidador) REFERENCES alumno(id_alumno) ON DELETE CASCADE ON UPDATE CASCADE
+);
+-- ----------------
+-- TABLA HOBBIES
+-- ----------------
+CREATE TABLE IF NOT EXISTS hobby(
+    id_hobby SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL UNIQUE
+);
+CREATE TABLE IF NOT EXISTS alumno_practica_hobby(
+    id_hobby INT PRIMARY KEY,
+    id_alumno INT NOT NULL,
+    CONSTRAINT fk_alumno FOREIGN KEY (id_alumno) REFERENCES alumno(id_alumno) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_hobby FOREIGN KEY (id_hobby) REFERENCES hobby(id_hobby) ON DELETE CASCADE ON UPDATE CASCADE
+);
+-- ----------------
+-- TABLA SERIE, ALUMNO_RECOMIENDA_SERIE
+-- ----------------
+
+CREATE TABLE IF NOT EXISTS series(
+    id_serie SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL UNIQUE
+);
+CREATE TABLE IF NOT EXISTS alumno_recomienda_serie(
+    id_serie INT PRIMARY KEY,
+    id_alumno INT NOT NULL,
+    CONSTRAINT fk_alumno FOREIGN KEY (id_alumno) REFERENCES alumno(id_alumno) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_serie FOREIGN KEY (id_serie) REFERENCES series(id_serie) ON DELETE CASCADE ON UPDATE CASCADE
+);
+-- ----------------
+-- TABLA MUSICA, ALUMNO_RECOMIENDA_MUSICA
+-- ----------------
+CREATE TABLE IF NOT EXISTS musica(
+    id_musica SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL UNIQUE
+);
+CREATE TABLE IF NOT EXISTS alumno_recomienda_musica(
+    id_musica INT PRIMARY KEY,
+    id_alumno INT NOT NULL,
+    CONSTRAINT fk_alumno FOREIGN KEY (id_alumno) REFERENCES alumno(id_alumno) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_musica FOREIGN KEY (id_musica) REFERENCES musica(id_musica) ON DELETE CASCADE ON UPDATE CASCADE
+);
+$$;
+
+
+ALTER PROCEDURE public."createInitialTables"() OWNER TO postgres;
+
+--
+-- TOC entry 270 (class 1255 OID 17295)
+-- Name: csv_to_column(text, text, text); Type: PROCEDURE; Schema: public; Owner: postgres
+--
+
+CREATE PROCEDURE public.csv_to_column(IN tabla_destino text, IN columna_destino text, IN ruta_csv text)
+    LANGUAGE plpgsql
+    AS $_$
+DECLARE
+    f RECORD;
+	ya_existe BOOLEAN;
+BEGIN
+    -- Crear tabla temporal (se elimina automáticamente al finalizar la transacción)
+    CREATE TEMP TABLE IF NOT EXISTS tabla_temporal (
+        pivot TEXT NOT NULL
+    ) ON COMMIT DROP;
+
+    -- Cargar datos del CSV a la tabla temporal
+    EXECUTE format(
+        'COPY tabla_temporal (pivot) FROM %L WITH (FORMAT CSV, HEADER, DELIMITER '','')',
+        ruta_csv
+    );
+
+    -- Confirmación de inicio del proceso
+    RAISE NOTICE 'Starting load to table %', tabla_destino;
+
+    -- Iterar sobre los datos de la tabla temporal e insertarlos en la tabla destino
+    FOR f IN
+        SELECT pivot
+        FROM tabla_temporal
+    LOOP
+	
+       EXECUTE format(
+            'SELECT EXISTS (SELECT 1 FROM %I WHERE %I = $1)',
+            tabla_destino, columna_destino
+        ) INTO ya_existe
+        USING f.pivot;
+
+		IF NOT ya_existe THEN
+            EXECUTE format(
+                'INSERT INTO %I (%I) VALUES ($1)',
+                tabla_destino, columna_destino
+            ) USING f.pivot;
+
+            RAISE NOTICE 'Inserted new value: %', f.pivot;
+        ELSE
+            RAISE NOTICE 'Value already exists, not inserted: %', f.pivot;
+        END IF;
+    END LOOP;
+
+    -- Confirmación de fin del proceso
+    RAISE NOTICE 'Load finished for table %', tabla_destino;
+
+    -- Limpiar la tabla temporal
+    TRUNCATE TABLE tabla_temporal;
+
+END;
+$_$;
+
+
+ALTER PROCEDURE public.csv_to_column(IN tabla_destino text, IN columna_destino text, IN ruta_csv text) OWNER TO postgres;
+
+--
+-- TOC entry 271 (class 1255 OID 17668)
+-- Name: full_truncate(); Type: PROCEDURE; Schema: public; Owner: postgres
+--
+
+CREATE PROCEDURE public.full_truncate()
+    LANGUAGE sql
+    AS $$TRUNCATE public.alumno RESTART IDENTITY CASCADE;
+TRUNCATE public.grupo RESTART IDENTITY CASCADE;
+TRUNCATE public.hobby RESTART IDENTITY CASCADE;
+TRUNCATE public.localidad RESTART IDENTITY CASCADE;
+TRUNCATE public.materia RESTART IDENTITY CASCADE;
+TRUNCATE public.musica RESTART IDENTITY CASCADE;
+TRUNCATE public.profesion RESTART IDENTITY CASCADE;
+TRUNCATE public.rol RESTART IDENTITY CASCADE;
+TRUNCATE public.series RESTART IDENTITY CASCADE;
+TRUNCATE public.alumno_cursa_materia RESTART IDENTITY CASCADE;$$;
+
+
+ALTER PROCEDURE public.full_truncate() OWNER TO postgres;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- TOC entry 236 (class 1259 OID 16849)
+-- Name: alumno; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.alumno (
+    id_alumno integer NOT NULL,
+    dni integer NOT NULL,
+    nombre character varying(100) NOT NULL,
+    apellido character varying(100) NOT NULL,
+    email character varying(100) NOT NULL,
+    exp_sql boolean NOT NULL,
+    exp_no_sql boolean NOT NULL,
+    id_profesion integer,
+    id_localidad integer NOT NULL
+);
+
+
+ALTER TABLE public.alumno OWNER TO postgres;
+
+--
+-- TOC entry 239 (class 1259 OID 16876)
+-- Name: alumno_cursa_materia; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.alumno_cursa_materia (
+    id_materia integer NOT NULL,
+    id_alumno integer NOT NULL
+);
+
+
+ALTER TABLE public.alumno_cursa_materia OWNER TO postgres;
+
+--
+-- TOC entry 235 (class 1259 OID 16848)
+-- Name: alumno_id_alumno_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.alumno_id_alumno_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.alumno_id_alumno_seq OWNER TO postgres;
+
+--
+-- TOC entry 3561 (class 0 OID 0)
+-- Dependencies: 235
+-- Name: alumno_id_alumno_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.alumno_id_alumno_seq OWNED BY public.alumno.id_alumno;
+
+
+--
+-- TOC entry 249 (class 1259 OID 16950)
+-- Name: alumno_practica_hobby; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.alumno_practica_hobby (
+    id_hobby integer NOT NULL,
+    id_alumno integer NOT NULL
+);
+
+
+ALTER TABLE public.alumno_practica_hobby OWNER TO postgres;
+
+--
+-- TOC entry 255 (class 1259 OID 16998)
+-- Name: alumno_recomienda_musica; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.alumno_recomienda_musica (
+    id_musica integer NOT NULL,
+    id_alumno integer NOT NULL
+);
+
+
+ALTER TABLE public.alumno_recomienda_musica OWNER TO postgres;
+
+--
+-- TOC entry 252 (class 1259 OID 16974)
+-- Name: alumno_recomienda_serie; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.alumno_recomienda_serie (
+    id_serie integer NOT NULL,
+    id_alumno integer NOT NULL
+);
+
+
+ALTER TABLE public.alumno_recomienda_serie OWNER TO postgres;
+
+--
+-- TOC entry 243 (class 1259 OID 16901)
+-- Name: grupo; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.grupo (
+    id_grupo integer NOT NULL,
+    nombre character varying(100) NOT NULL
+);
+
+
+ALTER TABLE public.grupo OWNER TO postgres;
+
+--
+-- TOC entry 242 (class 1259 OID 16900)
+-- Name: grupo_id_grupo_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.grupo_id_grupo_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.grupo_id_grupo_seq OWNER TO postgres;
+
+--
+-- TOC entry 3562 (class 0 OID 0)
+-- Dependencies: 242
+-- Name: grupo_id_grupo_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.grupo_id_grupo_seq OWNED BY public.grupo.id_grupo;
+
+
+--
+-- TOC entry 248 (class 1259 OID 16942)
+-- Name: hobby; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.hobby (
+    id_hobby integer NOT NULL,
+    nombre character varying(100) NOT NULL
+);
+
+
+ALTER TABLE public.hobby OWNER TO postgres;
+
+--
+-- TOC entry 247 (class 1259 OID 16941)
+-- Name: hobby_id_hobby_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.hobby_id_hobby_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.hobby_id_hobby_seq OWNER TO postgres;
+
+--
+-- TOC entry 3563 (class 0 OID 0)
+-- Dependencies: 247
+-- Name: hobby_id_hobby_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.hobby_id_hobby_seq OWNED BY public.hobby.id_hobby;
+
+
+--
+-- TOC entry 234 (class 1259 OID 16840)
+-- Name: localidad; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.localidad (
+    id_localidad integer NOT NULL,
+    nombre character varying(100) NOT NULL
+);
+
+
+ALTER TABLE public.localidad OWNER TO postgres;
+
+--
+-- TOC entry 233 (class 1259 OID 16839)
+-- Name: localidad_id_localidad_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.localidad_id_localidad_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.localidad_id_localidad_seq OWNER TO postgres;
+
+--
+-- TOC entry 3564 (class 0 OID 0)
+-- Dependencies: 233
+-- Name: localidad_id_localidad_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.localidad_id_localidad_seq OWNED BY public.localidad.id_localidad;
+
+
+--
+-- TOC entry 246 (class 1259 OID 16930)
+-- Name: mascotas; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.mascotas (
+    id_mascota integer NOT NULL,
+    tipo character varying(100) NOT NULL,
+    id_cuidador integer NOT NULL
+);
+
+
+ALTER TABLE public.mascotas OWNER TO postgres;
+
+--
+-- TOC entry 245 (class 1259 OID 16929)
+-- Name: mascotas_id_mascota_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.mascotas_id_mascota_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.mascotas_id_mascota_seq OWNER TO postgres;
+
+--
+-- TOC entry 3565 (class 0 OID 0)
+-- Dependencies: 245
+-- Name: mascotas_id_mascota_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.mascotas_id_mascota_seq OWNED BY public.mascotas.id_mascota;
+
+
+--
+-- TOC entry 238 (class 1259 OID 16868)
+-- Name: materia; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.materia (
+    id_materia integer NOT NULL,
+    nombre character varying(100) NOT NULL
+);
+
+
+ALTER TABLE public.materia OWNER TO postgres;
+
+--
+-- TOC entry 237 (class 1259 OID 16867)
+-- Name: materia_id_materia_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.materia_id_materia_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.materia_id_materia_seq OWNER TO postgres;
+
+--
+-- TOC entry 3566 (class 0 OID 0)
+-- Dependencies: 237
+-- Name: materia_id_materia_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.materia_id_materia_seq OWNED BY public.materia.id_materia;
+
+
+--
+-- TOC entry 254 (class 1259 OID 16990)
+-- Name: musica; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.musica (
+    id_musica integer NOT NULL,
+    nombre character varying(100) NOT NULL
+);
+
+
+ALTER TABLE public.musica OWNER TO postgres;
+
+--
+-- TOC entry 253 (class 1259 OID 16989)
+-- Name: musica_id_musica_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.musica_id_musica_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.musica_id_musica_seq OWNER TO postgres;
+
+--
+-- TOC entry 3567 (class 0 OID 0)
+-- Dependencies: 253
+-- Name: musica_id_musica_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.musica_id_musica_seq OWNED BY public.musica.id_musica;
+
+
+--
+-- TOC entry 244 (class 1259 OID 16909)
+-- Name: pertenece; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.pertenece (
+    id_alumno integer NOT NULL,
+    id_grupo integer NOT NULL,
+    id_rol integer NOT NULL
+);
+
+
+ALTER TABLE public.pertenece OWNER TO postgres;
+
+--
+-- TOC entry 232 (class 1259 OID 16831)
+-- Name: profesion; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.profesion (
+    id_profesion integer NOT NULL,
+    nombre character varying(100) NOT NULL
+);
+
+
+ALTER TABLE public.profesion OWNER TO postgres;
+
+--
+-- TOC entry 231 (class 1259 OID 16830)
+-- Name: profesion_id_profesion_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.profesion_id_profesion_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.profesion_id_profesion_seq OWNER TO postgres;
+
+--
+-- TOC entry 3568 (class 0 OID 0)
+-- Dependencies: 231
+-- Name: profesion_id_profesion_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.profesion_id_profesion_seq OWNED BY public.profesion.id_profesion;
+
+
+--
+-- TOC entry 241 (class 1259 OID 16892)
+-- Name: rol; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.rol (
+    id_rol integer NOT NULL,
+    nombre character varying(100) NOT NULL
+);
+
+
+ALTER TABLE public.rol OWNER TO postgres;
+
+--
+-- TOC entry 240 (class 1259 OID 16891)
+-- Name: rol_id_rol_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.rol_id_rol_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.rol_id_rol_seq OWNER TO postgres;
+
+--
+-- TOC entry 3569 (class 0 OID 0)
+-- Dependencies: 240
+-- Name: rol_id_rol_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.rol_id_rol_seq OWNED BY public.rol.id_rol;
+
+
+--
+-- TOC entry 251 (class 1259 OID 16966)
+-- Name: series; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.series (
+    id_serie integer NOT NULL,
+    nombre character varying(100) NOT NULL
+);
+
+
+ALTER TABLE public.series OWNER TO postgres;
+
+--
+-- TOC entry 250 (class 1259 OID 16965)
+-- Name: series_id_serie_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.series_id_serie_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.series_id_serie_seq OWNER TO postgres;
+
+--
+-- TOC entry 3570 (class 0 OID 0)
+-- Dependencies: 250
+-- Name: series_id_serie_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.series_id_serie_seq OWNED BY public.series.id_serie;
+
+
+--
+-- TOC entry 3313 (class 2604 OID 16852)
+-- Name: alumno id_alumno; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.alumno ALTER COLUMN id_alumno SET DEFAULT nextval('public.alumno_id_alumno_seq'::regclass);
+
+
+--
+-- TOC entry 3316 (class 2604 OID 16904)
+-- Name: grupo id_grupo; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.grupo ALTER COLUMN id_grupo SET DEFAULT nextval('public.grupo_id_grupo_seq'::regclass);
+
+
+--
+-- TOC entry 3318 (class 2604 OID 16945)
+-- Name: hobby id_hobby; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.hobby ALTER COLUMN id_hobby SET DEFAULT nextval('public.hobby_id_hobby_seq'::regclass);
+
+
+--
+-- TOC entry 3312 (class 2604 OID 16843)
+-- Name: localidad id_localidad; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.localidad ALTER COLUMN id_localidad SET DEFAULT nextval('public.localidad_id_localidad_seq'::regclass);
+
+
+--
+-- TOC entry 3317 (class 2604 OID 16933)
+-- Name: mascotas id_mascota; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.mascotas ALTER COLUMN id_mascota SET DEFAULT nextval('public.mascotas_id_mascota_seq'::regclass);
+
+
+--
+-- TOC entry 3314 (class 2604 OID 16871)
+-- Name: materia id_materia; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.materia ALTER COLUMN id_materia SET DEFAULT nextval('public.materia_id_materia_seq'::regclass);
+
+
+--
+-- TOC entry 3320 (class 2604 OID 16993)
+-- Name: musica id_musica; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.musica ALTER COLUMN id_musica SET DEFAULT nextval('public.musica_id_musica_seq'::regclass);
+
+
+--
+-- TOC entry 3311 (class 2604 OID 16834)
+-- Name: profesion id_profesion; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.profesion ALTER COLUMN id_profesion SET DEFAULT nextval('public.profesion_id_profesion_seq'::regclass);
+
+
+--
+-- TOC entry 3315 (class 2604 OID 16895)
+-- Name: rol id_rol; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.rol ALTER COLUMN id_rol SET DEFAULT nextval('public.rol_id_rol_seq'::regclass);
+
+
+--
+-- TOC entry 3319 (class 2604 OID 16969)
+-- Name: series id_serie; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.series ALTER COLUMN id_serie SET DEFAULT nextval('public.series_id_serie_seq'::regclass);
+
+
+--
+-- TOC entry 3535 (class 0 OID 16849)
+-- Dependencies: 236
+-- Data for Name: alumno; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.alumno (id_alumno, dni, nombre, apellido, email, exp_sql, exp_no_sql, id_profesion, id_localidad) FROM stdin;
+1	37688075	jotallan	calvetti	gaabicarp@gmail.com	t	t	1	1
+2	41472398	mariel nadine	kovinchich	marielkov1998@gmail.com	t	f	2	2
+3	38532025	gasto ezequiel	abelardo	gabelardo@estudiantes.unsam.edu.ar	f	f	3	3
+4	40663606	rodrigo nicolas	pavon gomez	rodrigopavongomez@gmail.com	f	f	4	3
+5	38601662	m	dragonetti	mdragonetti@estudiantes.unsam.edu.ar	f	f	5	1
+6	44547586	juan ignacio	caceffo	jicaceffo@estudiantes.unsam.edu.ar	t	t	6	4
+7	37984582	julian	gibelli	juligibelli@gmail.com	t	t	5	5
+8	35972409	emiliano javier	nuñez	ejnunez@estudiantes.unsam.edu.ar	t	f	1	3
+9	43036494	alejo	menini	amenini@estudiantes.unsam.edu.ar	t	f	6	6
+10	35726203	facundo	barneche	fh.barneche@gmail.com	t	t	5	7
+11	43245286	valentino	bortolussi	valentino.bortolussi.lembo@gmail.com	f	f	\N	8
+12	42647332	santiago	bouza	sbouza@estudiantes.unsam.edu.ar	f	f	\N	8
+13	38703368	cristian	lomas	cristian.lomas.a@gmail.com	f	f	5	3
+14	42472348	tomás	neiro	tomasneiro@hotmail.com	f	f	7	3
+15	37626822	sobrecasa	villafañez 	ccvillafanezsobrecasa@estudiantes.unsam.edu.ar	t	f	5	9
+16	41067566	maximiliano	borrelli	maxifborrelli@gmail.com	t	t	5	3
+17	44792981	theo	narmontas bocci	narmontastheo@gmail.com	f	f	\N	3
+18	95822280	paola	toledo contreras	ptoledocontreras@estudiantes.unsam.edu.ar	t	f	5	9
+19	35993466	matias hernan	diaz	diaz.matiash@gmail.com	f	f	5	7
+20	42321002	annabella	pagano	apagano@estudiantes.unsam.edu.ar	t	f	7	1
+21	40007189	gabriel	tarquini	gabi.tarquini@gmail.com	f	f	8	12
+22	39800551	valentin pedro	fucceneco	vfuccenecco@estudiantes.unsam.edu.ar	f	f	9	1
+23	41106994	agustina	rey brienza	a.reybrienza@gmail.com	f	f	5	3
+24	43781315	emiliano	decuzzi	eadecuzzi@estudiantes.unsam.edu.ar	t	f	10	13
+25	44160355	tatiana	sabbatini	tsabbatini@estudiantes.unsam.edu.ar	f	f	11	10
+26	40395042	m	ruina	mjruina@estudiantes.unsam.edu.ar	f	f	\N	3
+27	41684308	lautaro	cuellar	lautacuellar69@hotmail.com	f	f	7	1
+28	43017353	federico	virgilio	fedevirgili00@gmail.com	f	f	\N	1
+29	42291365	alan	exarchos	alanexarchos@gmail.com	t	f	\N	12
+30	45105469	florencia	rossi	flrossi@estudiantes.unsam.edu.ar	f	f	\N	10
+31	41226377	ernesto	davogustto	ernesto.davogustto@gmail.com	f	f	6	3
+32	45174406	lucas gonzalo	rodriguez	lgrodriguez@estudiantes.unsam.edu.ar	f	f	\N	3
+33	39916775	alan	guarino	aguarino@estudiantes.unsam.edu.ar	f	f	8	3
+34	35766192	tamara eleonor	mecozzi	mecozzite@gmail.com	f	f	7	1
+35	41403378	agustin	hoj	ahoj@estudiantes.unsam.edu.ar	f	f	7	3
+36	35093145	matias	caballero	msebacaballero@gmail.com	f	f	7	16
+37	36594617	david	pazos	davidgpazos@gmail.com	f	f	7	5
+38	43441575	fabrizio	signorello	fsignorello@estudiantes.undam.edu.ar	f	f	\N	3
+39	42997600	andrés elias	simonini	aesimonini@estudiantes.unsam.edu.ar	f	f	\N	1
+40	35205248	emiliano	ferretti	emieferretti@gmail.com	f	f	7	7
+41	41555134	adrian	perez	amperez@estudiantes.unsam.edu.ar	f	f	12	3
+42	41548103	delfina	borrelli	dborrelli@estudiantes.unsam.edu.ar	f	f	8	3
+43	42101048	pedro	geraghty	pedrogeraghty82@gmail.com	f	f	\N	3
+44	36791436	diego	lentz	digoolentz@gmail.com	f	f	9	17
+45	44553142	valentin	pugliese	valentinpugliesew@outlook.com	f	f	7	3
+\.
+
+
+--
+-- TOC entry 3538 (class 0 OID 16876)
+-- Dependencies: 239
+-- Data for Name: alumno_cursa_materia; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.alumno_cursa_materia (id_materia, id_alumno) FROM stdin;
+1	1
+2	2
+1	2
+2	3
+1	3
+2	4
+1	4
+3	4
+1	5
+3	5
+1	6
+1	7
+3	7
+1	8
+3	8
+1	9
+1	10
+3	10
+2	11
+1	11
+3	11
+2	12
+1	12
+3	12
+2	13
+1	13
+3	13
+2	14
+1	14
+3	14
+1	15
+2	16
+1	16
+2	17
+1	17
+3	17
+1	18
+1	19
+3	19
+1	20
+4	20
+2	21
+1	21
+2	22
+1	22
+2	23
+1	23
+2	24
+1	24
+3	24
+1	25
+2	26
+1	26
+3	26
+2	27
+1	27
+3	27
+2	28
+1	28
+3	28
+1	29
+3	29
+2	30
+1	30
+3	30
+2	31
+1	31
+3	31
+2	32
+1	32
+3	32
+2	33
+1	33
+3	33
+1	34
+3	34
+2	35
+1	35
+1	36
+1	37
+4	37
+2	38
+1	38
+2	39
+1	39
+2	40
+1	40
+2	41
+1	41
+3	41
+2	42
+1	42
+3	42
+2	43
+1	43
+2	44
+1	44
+3	44
+2	45
+1	45
+\.
+
+
+--
+-- TOC entry 3548 (class 0 OID 16950)
+-- Dependencies: 249
+-- Data for Name: alumno_practica_hobby; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.alumno_practica_hobby (id_hobby, id_alumno) FROM stdin;
+3	1
+1	1
+2	1
+5	2
+3	2
+4	2
+6	2
+7	3
+8	4
+9	5
+11	6
+10	6
+9	7
+11	7
+9	12
+9	13
+12	13
+9	14
+4	14
+13	15
+6	15
+5	17
+3	17
+13	18
+6	18
+6	21
+1	23
+7	23
+10	23
+14	24
+8	25
+1	26
+6	29
+7	32
+6	32
+14	34
+2	34
+6	35
+1	36
+7	36
+12	37
+15	37
+3	39
+6	39
+11	40
+9	41
+6	41
+6	43
+6	44
+3	45
+7	45
+\.
+
+
+--
+-- TOC entry 3554 (class 0 OID 16998)
+-- Dependencies: 255
+-- Data for Name: alumno_recomienda_musica; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.alumno_recomienda_musica (id_musica, id_alumno) FROM stdin;
+1	1
+1	2
+2	2
+3	3
+4	4
+5	6
+6	7
+7	7
+8	8
+9	11
+10	14
+1	19
+11	20
+1	21
+1	22
+1	23
+12	24
+1	27
+13	29
+15	29
+14	29
+16	30
+1	32
+14	35
+1	37
+1	38
+14	38
+1	43
+13	43
+1	44
+14	44
+\.
+
+
+--
+-- TOC entry 3551 (class 0 OID 16974)
+-- Dependencies: 252
+-- Data for Name: alumno_recomienda_serie; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.alumno_recomienda_serie (id_serie, id_alumno) FROM stdin;
+1	7
+2	9
+3	9
+4	15
+4	18
+5	21
+2	22
+5	30
+6	35
+7	39
+9	41
+8	41
+10	43
+5	43
+\.
+
+
+--
+-- TOC entry 3542 (class 0 OID 16901)
+-- Dependencies: 243
+-- Data for Name: grupo; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.grupo (id_grupo, nombre) FROM stdin;
+1	datamasters
+2	nullpointer
+3	enrutados
+4	mandarina
+5	mcteam
+6	okupas
+7	undefined
+8	droptable
+9	dreamteam
+\.
+
+
+--
+-- TOC entry 3547 (class 0 OID 16942)
+-- Dependencies: 248
+-- Data for Name: hobby; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.hobby (id_hobby, nombre) FROM stdin;
+1	guitarra
+2	viajar
+3	videojuegos
+4	mangas
+5	anime
+6	series
+7	música
+8	voley
+9	leer
+10	cantar
+11	correr
+12	ajedrez
+13	películas
+14	gimnasio
+15	fútbol
+\.
+
+
+--
+-- TOC entry 3533 (class 0 OID 16840)
+-- Dependencies: 234
+-- Data for Name: localidad; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.localidad (id_localidad, nombre) FROM stdin;
+1	san martin
+2	j.l suarez
+3	no especifica
+4	general pacheco
+5	belgrano
+6	san andres
+7	santos lugares
+8	escobar
+9	boedo
+10	caba
+11	villa gesell
+12	villa bosch
+13	ciudad jardin
+14	villa urquiza
+15	loma hermosa
+16	laferrere
+17	chilavert
+\.
+
+
+--
+-- TOC entry 3545 (class 0 OID 16930)
+-- Dependencies: 246
+-- Data for Name: mascotas; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.mascotas (id_mascota, tipo, id_cuidador) FROM stdin;
+1	perro	2
+2	perro	3
+3	gato	4
+4	perro	4
+5	gato	5
+6	perro	5
+7	gato	10
+8	perro	11
+9	gato	12
+10	gato	13
+11	perro	14
+12	perro	16
+13	perro	19
+14	gato	20
+15	perro	20
+16	gato	21
+17	perro	21
+18	gato	22
+19	perro	23
+20	perro	24
+21	gato	27
+22	perro	29
+23	perro	30
+24	perro	31
+25	perro	32
+26	perro	33
+27	gato	34
+28	perro	34
+29	perro	36
+30	gato	38
+31	perro	38
+32	gato	39
+33	perro	39
+34	perro	40
+35	gato	41
+36	perro	41
+37	gato	42
+38	gato	43
+39	perro	43
+40	gato	44
+\.
+
+
+--
+-- TOC entry 3537 (class 0 OID 16868)
+-- Dependencies: 238
+-- Data for Name: materia; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.materia (id_materia, nombre) FROM stdin;
+1	base_de_datos
+2	algoritmos_3
+3	seminario
+4	caso
+\.
+
+
+--
+-- TOC entry 3553 (class 0 OID 16990)
+-- Dependencies: 254
+-- Data for Name: musica; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.musica (id_musica, nombre) FROM stdin;
+1	rock nacional
+2	bandas sonoras
+3	the beatles
+4	tropicales
+5	wos
+6	arctic monkeys
+7	radiohead
+8	foofighters
+9	queen
+10	top 50
+11	los piojos
+12	the hives
+13	metal
+14	electronica
+15	trap argentino
+16	miranda!
+\.
+
+
+--
+-- TOC entry 3543 (class 0 OID 16909)
+-- Dependencies: 244
+-- Data for Name: pertenece; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.pertenece (id_alumno, id_grupo, id_rol) FROM stdin;
+1	1	1
+2	1	2
+3	1	3
+4	1	4
+5	1	5
+6	2	4
+7	2	1
+8	2	2
+9	2	5
+10	2	3
+11	3	5
+12	3	4
+13	3	2
+14	3	1
+15	3	3
+16	4	4
+17	4	1
+18	4	2
+19	4	5
+20	4	3
+21	5	4
+22	5	1
+23	5	2
+24	5	5
+25	5	3
+26	6	4
+27	6	1
+28	6	2
+29	6	5
+30	6	3
+31	7	4
+32	7	2
+33	7	5
+34	7	3
+35	7	1
+36	8	4
+37	8	1
+38	8	2
+39	8	5
+40	8	3
+41	9	4
+42	9	1
+43	9	2
+44	9	5
+45	9	3
+\.
+
+
+--
+-- TOC entry 3531 (class 0 OID 16831)
+-- Dependencies: 232
+-- Data for Name: profesion; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.profesion (id_profesion, nombre) FROM stdin;
+1	seguro
+2	busco
+3	oficina
+4	freelance
+5	desarrollador
+6	ingeniero de datos
+7	trabaja/no_especifica
+8	comercio
+9	administrativo
+10	informatica
+11	pasante
+12	docente
+\.
+
+
+--
+-- TOC entry 3540 (class 0 OID 16892)
+-- Dependencies: 241
+-- Data for Name: rol; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.rol (id_rol, nombre) FROM stdin;
+1	organizador
+2	representante
+3	team leader
+4	lider tecnico
+5	supervisor
+\.
+
+
+--
+-- TOC entry 3550 (class 0 OID 16966)
+-- Dependencies: 251
+-- Data for Name: series; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.series (id_serie, nombre) FROM stdin;
+1	supernatural
+2	the boys
+3	the bear
+4	soy betty la fea
+5	the office
+6	house of the dragon
+7	arcane
+8	dark
+9	black mirror
+10	better call saul
+\.
+
+
+--
+-- TOC entry 3571 (class 0 OID 0)
+-- Dependencies: 235
+-- Name: alumno_id_alumno_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.alumno_id_alumno_seq', 45, true);
+
+
+--
+-- TOC entry 3572 (class 0 OID 0)
+-- Dependencies: 242
+-- Name: grupo_id_grupo_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.grupo_id_grupo_seq', 9, true);
+
+
+--
+-- TOC entry 3573 (class 0 OID 0)
+-- Dependencies: 247
+-- Name: hobby_id_hobby_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.hobby_id_hobby_seq', 15, true);
+
+
+--
+-- TOC entry 3574 (class 0 OID 0)
+-- Dependencies: 233
+-- Name: localidad_id_localidad_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.localidad_id_localidad_seq', 17, true);
+
+
+--
+-- TOC entry 3575 (class 0 OID 0)
+-- Dependencies: 245
+-- Name: mascotas_id_mascota_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.mascotas_id_mascota_seq', 40, true);
+
+
+--
+-- TOC entry 3576 (class 0 OID 0)
+-- Dependencies: 237
+-- Name: materia_id_materia_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.materia_id_materia_seq', 4, true);
+
+
+--
+-- TOC entry 3577 (class 0 OID 0)
+-- Dependencies: 253
+-- Name: musica_id_musica_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.musica_id_musica_seq', 16, true);
+
+
+--
+-- TOC entry 3578 (class 0 OID 0)
+-- Dependencies: 231
+-- Name: profesion_id_profesion_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.profesion_id_profesion_seq', 12, true);
+
+
+--
+-- TOC entry 3579 (class 0 OID 0)
+-- Dependencies: 240
+-- Name: rol_id_rol_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.rol_id_rol_seq', 5, true);
+
+
+--
+-- TOC entry 3580 (class 0 OID 0)
+-- Dependencies: 250
+-- Name: series_id_serie_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.series_id_serie_seq', 10, true);
+
+
+--
+-- TOC entry 3338 (class 2606 OID 18208)
+-- Name: alumno_cursa_materia alumno_cursa_materia_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.alumno_cursa_materia
+    ADD CONSTRAINT alumno_cursa_materia_pkey PRIMARY KEY (id_alumno, id_materia);
+
+
+--
+-- TOC entry 3330 (class 2606 OID 16856)
+-- Name: alumno alumno_dni_email_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.alumno
+    ADD CONSTRAINT alumno_dni_email_key UNIQUE (dni, email);
+
+
+--
+-- TOC entry 3332 (class 2606 OID 16854)
+-- Name: alumno alumno_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.alumno
+    ADD CONSTRAINT alumno_pkey PRIMARY KEY (id_alumno);
+
+
+--
+-- TOC entry 3358 (class 2606 OID 18512)
+-- Name: alumno_practica_hobby alumno_practica_hobby_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.alumno_practica_hobby
+    ADD CONSTRAINT alumno_practica_hobby_pkey PRIMARY KEY (id_alumno, id_hobby);
+
+
+--
+-- TOC entry 3370 (class 2606 OID 18514)
+-- Name: alumno_recomienda_musica alumno_recomienda_musica_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.alumno_recomienda_musica
+    ADD CONSTRAINT alumno_recomienda_musica_pkey PRIMARY KEY (id_alumno, id_musica);
+
+
+--
+-- TOC entry 3364 (class 2606 OID 18516)
+-- Name: alumno_recomienda_serie alumno_recomienda_serie_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.alumno_recomienda_serie
+    ADD CONSTRAINT alumno_recomienda_serie_pkey PRIMARY KEY (id_alumno, id_serie);
+
+
+--
+-- TOC entry 3348 (class 2606 OID 18571)
+-- Name: pertenece fk_grupo_rol; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.pertenece
+    ADD CONSTRAINT fk_grupo_rol UNIQUE (id_grupo, id_rol);
+
+
+--
+-- TOC entry 3344 (class 2606 OID 16908)
+-- Name: grupo grupo_nombre_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.grupo
+    ADD CONSTRAINT grupo_nombre_key UNIQUE (nombre);
+
+
+--
+-- TOC entry 3346 (class 2606 OID 16906)
+-- Name: grupo grupo_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.grupo
+    ADD CONSTRAINT grupo_pkey PRIMARY KEY (id_grupo);
+
+
+--
+-- TOC entry 3354 (class 2606 OID 16949)
+-- Name: hobby hobby_nombre_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.hobby
+    ADD CONSTRAINT hobby_nombre_key UNIQUE (nombre);
+
+
+--
+-- TOC entry 3356 (class 2606 OID 16947)
+-- Name: hobby hobby_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.hobby
+    ADD CONSTRAINT hobby_pkey PRIMARY KEY (id_hobby);
+
+
+--
+-- TOC entry 3326 (class 2606 OID 16847)
+-- Name: localidad localidad_nombre_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.localidad
+    ADD CONSTRAINT localidad_nombre_key UNIQUE (nombre);
+
+
+--
+-- TOC entry 3328 (class 2606 OID 16845)
+-- Name: localidad localidad_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.localidad
+    ADD CONSTRAINT localidad_pkey PRIMARY KEY (id_localidad);
+
+
+--
+-- TOC entry 3352 (class 2606 OID 16935)
+-- Name: mascotas mascotas_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.mascotas
+    ADD CONSTRAINT mascotas_pkey PRIMARY KEY (id_mascota);
+
+
+--
+-- TOC entry 3334 (class 2606 OID 16875)
+-- Name: materia materia_nombre_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.materia
+    ADD CONSTRAINT materia_nombre_key UNIQUE (nombre);
+
+
+--
+-- TOC entry 3336 (class 2606 OID 16873)
+-- Name: materia materia_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.materia
+    ADD CONSTRAINT materia_pkey PRIMARY KEY (id_materia);
+
+
+--
+-- TOC entry 3366 (class 2606 OID 16997)
+-- Name: musica musica_nombre_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.musica
+    ADD CONSTRAINT musica_nombre_key UNIQUE (nombre);
+
+
+--
+-- TOC entry 3368 (class 2606 OID 16995)
+-- Name: musica musica_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.musica
+    ADD CONSTRAINT musica_pkey PRIMARY KEY (id_musica);
+
+
+--
+-- TOC entry 3350 (class 2606 OID 18590)
+-- Name: pertenece pk_pertenece; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.pertenece
+    ADD CONSTRAINT pk_pertenece PRIMARY KEY (id_alumno);
+
+
+--
+-- TOC entry 3322 (class 2606 OID 16838)
+-- Name: profesion profesion_nombre_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.profesion
+    ADD CONSTRAINT profesion_nombre_key UNIQUE (nombre);
+
+
+--
+-- TOC entry 3324 (class 2606 OID 16836)
+-- Name: profesion profesion_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.profesion
+    ADD CONSTRAINT profesion_pkey PRIMARY KEY (id_profesion);
+
+
+--
+-- TOC entry 3340 (class 2606 OID 16899)
+-- Name: rol rol_nombre_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.rol
+    ADD CONSTRAINT rol_nombre_key UNIQUE (nombre);
+
+
+--
+-- TOC entry 3342 (class 2606 OID 16897)
+-- Name: rol rol_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.rol
+    ADD CONSTRAINT rol_pkey PRIMARY KEY (id_rol);
+
+
+--
+-- TOC entry 3360 (class 2606 OID 16973)
+-- Name: series series_nombre_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.series
+    ADD CONSTRAINT series_nombre_key UNIQUE (nombre);
+
+
+--
+-- TOC entry 3362 (class 2606 OID 16971)
+-- Name: series series_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.series
+    ADD CONSTRAINT series_pkey PRIMARY KEY (id_serie);
+
+
+--
+-- TOC entry 3373 (class 2606 OID 16881)
+-- Name: alumno_cursa_materia fk_alumno; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.alumno_cursa_materia
+    ADD CONSTRAINT fk_alumno FOREIGN KEY (id_alumno) REFERENCES public.alumno(id_alumno) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- TOC entry 3375 (class 2606 OID 16924)
+-- Name: pertenece fk_alumno; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.pertenece
+    ADD CONSTRAINT fk_alumno FOREIGN KEY (id_alumno) REFERENCES public.alumno(id_alumno) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- TOC entry 3379 (class 2606 OID 16955)
+-- Name: alumno_practica_hobby fk_alumno; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.alumno_practica_hobby
+    ADD CONSTRAINT fk_alumno FOREIGN KEY (id_alumno) REFERENCES public.alumno(id_alumno) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- TOC entry 3381 (class 2606 OID 16979)
+-- Name: alumno_recomienda_serie fk_alumno; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.alumno_recomienda_serie
+    ADD CONSTRAINT fk_alumno FOREIGN KEY (id_alumno) REFERENCES public.alumno(id_alumno) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- TOC entry 3383 (class 2606 OID 17003)
+-- Name: alumno_recomienda_musica fk_alumno; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.alumno_recomienda_musica
+    ADD CONSTRAINT fk_alumno FOREIGN KEY (id_alumno) REFERENCES public.alumno(id_alumno) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- TOC entry 3378 (class 2606 OID 16936)
+-- Name: mascotas fk_cuidador; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.mascotas
+    ADD CONSTRAINT fk_cuidador FOREIGN KEY (id_cuidador) REFERENCES public.alumno(id_alumno) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- TOC entry 3376 (class 2606 OID 16919)
+-- Name: pertenece fk_grupo; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.pertenece
+    ADD CONSTRAINT fk_grupo FOREIGN KEY (id_grupo) REFERENCES public.grupo(id_grupo) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- TOC entry 3380 (class 2606 OID 16960)
+-- Name: alumno_practica_hobby fk_hobby; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.alumno_practica_hobby
+    ADD CONSTRAINT fk_hobby FOREIGN KEY (id_hobby) REFERENCES public.hobby(id_hobby) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- TOC entry 3371 (class 2606 OID 16862)
+-- Name: alumno fk_localidad; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.alumno
+    ADD CONSTRAINT fk_localidad FOREIGN KEY (id_localidad) REFERENCES public.localidad(id_localidad) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- TOC entry 3374 (class 2606 OID 16886)
+-- Name: alumno_cursa_materia fk_materia; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.alumno_cursa_materia
+    ADD CONSTRAINT fk_materia FOREIGN KEY (id_materia) REFERENCES public.materia(id_materia) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- TOC entry 3384 (class 2606 OID 17008)
+-- Name: alumno_recomienda_musica fk_musica; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.alumno_recomienda_musica
+    ADD CONSTRAINT fk_musica FOREIGN KEY (id_musica) REFERENCES public.musica(id_musica) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- TOC entry 3372 (class 2606 OID 16857)
+-- Name: alumno fk_profesion; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.alumno
+    ADD CONSTRAINT fk_profesion FOREIGN KEY (id_profesion) REFERENCES public.profesion(id_profesion) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- TOC entry 3377 (class 2606 OID 18584)
+-- Name: pertenece fk_rol; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.pertenece
+    ADD CONSTRAINT fk_rol FOREIGN KEY (id_rol) REFERENCES public.rol(id_rol) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- TOC entry 3382 (class 2606 OID 16984)
+-- Name: alumno_recomienda_serie fk_serie; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.alumno_recomienda_serie
+    ADD CONSTRAINT fk_serie FOREIGN KEY (id_serie) REFERENCES public.series(id_serie) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+-- Completed on 2024-11-22 01:52:41 -03
+
+--
+-- PostgreSQL database dump complete
+--
+
+--
+-- Database "postgres" dump
+--
+
+\connect postgres
+
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 17.0 (Ubuntu 17.0-1.pgdg22.04+1)
+-- Dumped by pg_dump version 17.0 (Ubuntu 17.0-1.pgdg22.04+1)
+
+-- Started on 2024-11-22 01:52:41 -03
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+-- Completed on 2024-11-22 01:52:41 -03
+
+--
+-- PostgreSQL database dump complete
+--
+
+-- Completed on 2024-11-22 01:52:41 -03
+
+--
+-- PostgreSQL database cluster dump complete
+--
+
