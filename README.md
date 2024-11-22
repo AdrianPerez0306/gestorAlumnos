@@ -68,6 +68,7 @@ Con el server ya creado procedemos a utilizar la query tool que provee `PostgreS
 
 ##### b) Abrir querys tool.
 Una vez en el panel de querys, procedemos a ejecutar las querys. 
+
 i) Ejecutar todos los querys en el folder `procedures_calls`
 
 IMPORTANTE: Si quiere ejecutar las `procedures_calls` primero debe copiar los archivos dentro de `procedures` y ejecutarlos dentro de la query tool.
