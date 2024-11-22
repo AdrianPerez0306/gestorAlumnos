@@ -69,14 +69,17 @@ Con el server ya creado procedemos a utilizar la query tool que provee `PostgreS
 ##### b) Ejecutar querys.
 Una vez en el panel de querys, procedemos a ejecutar las querys. 
 i) Ejecutar todos los querys en el folder `procedures_calls`
+IMPORTANTE: Si quiere ejecutar las `procedures_calls` primero debe copiar los archivos dentro de `procedures` y ejecutarlos dentro de la query tool.
+
   `call_init` -> `call_load_column` -> `call_load_alumnos`
-  Aqui se puede ejecutar las querys de los respectivos archivos.
-  NOTA: Si quiere ejecutar las `procedures_calls` primero debe copiar los archivos dentro de `procedures` y ejecutarlos dentro de la query tool.
+  Una vez ejecutados los querys, deberia estar creadas las tablas y cargados los datos de los archivos correspondientes.
+  A partir de aqui, ya se pueden realizar consultas.
+  
 ![image](https://github.com/user-attachments/assets/4b53691a-54c0-4a78-8cfc-3573c5f7b54d)
 
 
 ### 2 - Importar el archivo `SERVER.json`.
-
+Dentro de `pgAdmin` seleccionar `Tools`-> `Import/Export server` -> Seleccionar `SERVER.json` ->  
 
 Si es la primera vez que corremos el proyecto, nos va a crear un montón de ejemplos de cómo testear, en caso contrario nos va abre el ambiente de desarrollo de cypress que tiene la siguiente pinta:
 
