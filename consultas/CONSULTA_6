@@ -1,0 +1,27 @@
+SELECT
+    a.id_alumno AS alumno_id,
+    CONCAT(a.nombre, ' ', a.apellido) AS alumno_nombre_completo,
+    a.email AS alumno_email,
+    a.exp_sql AS alumno_exp_sql,
+    a.exp_no_sql AS alumno_exp_no_sql,
+    m.id_alumno AS mentor_id,
+    CONCAT(m.nombre, ' ', m.apellido) AS mentor_nombre_completo,
+    m.email AS mentor_email,
+    m.exp_sql AS mentor_exp_sql,
+    m.exp_no_sql AS mentor_exp_no_sql,
+    h.nombre AS hobby_comun
+FROM
+    alumno a
+JOIN
+    alumno m ON a.id_alumno != m.id_alumno -- Excluir al propio alumno
+JOIN
+    alumno_practica_hobby ah1 ON ah1.id_alumno = a.id_alumno
+JOIN
+    alumno_practica_hobby ah2 ON ah2.id_alumno = m.id_alumno -- Unir hobbies del mentor
+JOIN
+    hobby h ON h.id_hobby = ah1.id_hobby AND h.id_hobby = ah2.id_hobby -- Verificar hobby en común
+WHERE
+	(m.exp_sql = TRUE OR m.exp_no_sql = TRUE) -- El mentor debe tener experiencia en SQL o No SQL
+ORDER BY
+    a.id_alumno, m.id_alumno;
+

@@ -1,0 +1,18 @@
+SELECT 
+    l.nombre AS localidad,
+    h.nombre as hobby,
+    COUNT(*) AS cantidad_alumnos
+FROM 
+    public.alumno a
+JOIN 
+    alumno_practica_hobby binaria ON a.id_alumno = binaria.id_alumno
+JOIN 
+    hobby h ON binaria.id_hobby = h.id_hobby
+JOIN 
+    localidad l ON a.id_localidad = l.id_localidad
+GROUP BY 
+    l.id_localidad, l.nombre, h.id_hobby
+ORDER BY 
+    l.nombre, cantidad_alumnos DESC;
+    
+

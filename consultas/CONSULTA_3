@@ -1,0 +1,60 @@
+WITH materia_por_grupo AS (
+    -- Contar cuántos alumnos cursan cada materia en cada grupo
+    SELECT 
+        g.id_grupo,
+        g.nombre AS grupo,
+        m.id_materia,
+        m.nombre AS materia,
+        COUNT(acm.id_alumno) AS alumnos_inscritos
+    FROM 
+        alumno_cursa_materia acm
+    INNER JOIN 
+        materia m ON acm.id_materia = m.id_materia
+    INNER JOIN 
+        alumno a ON acm.id_alumno = a.id_alumno
+    INNER JOIN 
+        pertenece apg ON a.id_alumno = apg.id_alumno
+    INNER JOIN 
+        grupo g ON apg.id_grupo = g.id_grupo
+    GROUP BY 
+        g.id_grupo, g.nombre, m.id_materia, m.nombre
+),
+materia_mas_popular AS (
+    -- Identificar la materia más popular en cada grupo
+    SELECT 
+        mpg.id_grupo,
+        mpg.grupo,
+        mpg.id_materia,
+        mpg.materia,
+        mpg.alumnos_inscritos,
+        ROW_NUMBER() OVER (PARTITION BY mpg.id_grupo ORDER BY mpg.alumnos_inscritos DESC) AS rn
+    FROM 
+        materia_por_grupo mpg
+),
+alumnos_por_grupo AS (
+    -- Contar el total de alumnos en cada grupo
+    SELECT 
+        g.id_grupo,
+        g.nombre AS grupo,
+        COUNT(DISTINCT apg.id_alumno) AS total_alumnos
+    FROM 
+        grupo g
+    INNER JOIN 
+        pertenece apg ON g.id_grupo = apg.id_grupo
+    GROUP BY 
+        g.id_grupo, g.nombre
+)
+-- Obtener el resultado final con el porcentaje
+SELECT 
+    mmp.grupo,
+    mmp.materia AS materia_mas_popular,
+    mmp.alumnos_inscritos,
+    ROUND((mmp.alumnos_inscritos::DECIMAL / apg.total_alumnos) * 100, 2) AS porcentaje_alumnos_en_esa_materia
+FROM 
+    materia_mas_popular mmp
+INNER JOIN 
+    alumnos_por_grupo apg ON mmp.id_grupo = apg.id_grupo
+WHERE 
+    mmp.rn = 1 -- Seleccionar solo la materia más popular por grupo
+ORDER BY 
+    mmp.grupo;

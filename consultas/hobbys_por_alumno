@@ -1,11 +1,11 @@
 SELECT 
     a.nombre AS alumno,
-    s.nombre AS serie
+    h.nombre AS hobby
 FROM 
-    alumno_recomienda_serie ars
+    alumno_practica_hobby aph
 JOIN 
-    alumno a ON ars.id_alumno = a.id_alumno
+    alumno a ON aph.id_alumno = a.id_alumno
 JOIN 
-    series s ON ars.id_serie = s.id_serie
+    hobby h ON aph.id_hobby = h.id_hobby
 ORDER BY 
-    a.nombre, s.nombre;
+    a.nombre, h.nombre;

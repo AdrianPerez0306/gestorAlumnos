@@ -1,0 +1,31 @@
+WITH alumnos_con_experiencia AS (
+    SELECT 
+        a.id_alumno,
+        a.nombre,
+        a.apellido,
+        a.email,
+        CASE 
+            WHEN a.exp_sql THEN 'Sí'
+            ELSE 'No'
+        END AS SQL,
+        CASE 
+            WHEN a.exp_no_sql THEN 'Sí'
+            ELSE 'No'
+        END AS noSQL,
+        COALESCE(p.nombre, 'Sin profesión registrada') AS profesion
+    FROM 
+        alumno a
+    LEFT JOIN 
+        profesion p ON a.id_profesion = p.id_profesion
+)
+-- Resultado final
+SELECT 
+    nombre || ' ' || apellido AS alumno,
+    email,
+    SQL,
+    noSQL,
+    profesion
+FROM 
+    alumnos_con_experiencia
+ORDER BY 
+    nombre, apellido;

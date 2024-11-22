@@ -1,0 +1,22 @@
+SELECT 
+    l.nombre AS localidad,
+    COUNT(DISTINCT a.id_alumno) AS cantidad_alumnos,
+    ROUND(AVG(materias_inscritas.cantidad_materias), 1) AS promedio_materias
+FROM 
+    localidad l
+JOIN 
+    alumno a ON a.id_localidad = l.id_localidad
+LEFT JOIN (
+    SELECT 
+        acm.id_alumno,
+        COUNT(acm.id_materia) AS cantidad_materias
+    FROM 
+        alumno_cursa_materia acm
+    GROUP BY 
+        acm.id_alumno
+) AS materias_inscritas ON materias_inscritas.id_alumno = a.id_alumno
+GROUP BY 
+    l.nombre
+ORDER BY 
+    cantidad_alumnos DESC;
+
