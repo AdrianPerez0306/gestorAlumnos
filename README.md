@@ -51,8 +51,9 @@ Una vez creado el server deberia verse un panel como el siguiente:
 
 Con el server ya creado procedemos a utilizar la query tool que provee `PostgreSQL`:
 ![image](https://github.com/user-attachments/assets/7bc8605f-209c-4888-a69e-d092fec69446)
+![image](https://github.com/user-attachments/assets/dc254c26-a05d-4f2e-af2e-e15b8c49ddc9)
 
-
+Una vez en el panel de querys, procedemos a ejecutar las querys.
 ##### b) Ejecutar querys.
 ![image](https://github.com/user-attachments/assets/4b53691a-54c0-4a78-8cfc-3573c5f7b54d)
 
