@@ -33,8 +33,31 @@ Una vez ejecutado, en el `path` que haya configurado en el script `preprocessing
 
 ![image](https://github.com/user-attachments/assets/9d63581d-5389-4f5b-9fb0-9c8134cf3d9c)
 
+Una vez con estos archivos en la carpeta correspondiente, procedemos a abrir `PgAdmin`. A partir de aqui hay 2 caminos posibles:
+
+### 1 - Construccion del sistema de base de datos desde querys.
+#### Pasos a seguir
+##### a) Crear un server en PgAdmin.
+
+![image](https://github.com/user-attachments/assets/3a22f8bb-34f5-4b8f-a55d-aeaa2466b365)
+
+Determinar el nombre del server.
+
+![image](https://github.com/user-attachments/assets/6d289825-8848-495f-bfe2-e0e0ec9668ba)
+
+Una vez creado el server deberia verse un panel como el siguiente:
+
+![image](https://github.com/user-attachments/assets/f413e971-1a44-4d10-9789-6a8ddee8bc7e)
+
+Con el server ya creado procedemos a utilizar la query tool que provee `PostgreSQL`:
+![image](https://github.com/user-attachments/assets/7bc8605f-209c-4888-a69e-d092fec69446)
 
 
+##### b) Ejecutar querys.
+![image](https://github.com/user-attachments/assets/4b53691a-54c0-4a78-8cfc-3573c5f7b54d)
+
+
+### 2 - Importar el archivo `SERVER.json`.
 
 
 Si es la primera vez que corremos el proyecto, nos va a crear un montón de ejemplos de cómo testear, en caso contrario nos va abre el ambiente de desarrollo de cypress que tiene la siguiente pinta:
