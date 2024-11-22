@@ -1,21 +1,24 @@
 # Sistema gestor de alumnos UNSAM
 Contexto teorico. ![link](https://github.com/AdrianPerez0306/gestorAlumnos/blob/42ace063c036c55184657ba6f19447c937ccb2e3/TP%20Base%20de%20datos%202024%20UNSAM.pdf)
 
-![image](![image](https://github.com/user-attachments/assets/0c8d3dd6-85e0-4225-b763-65d9ca6f7bba)
-) en un framework de test e2e, para testear aplicaciones que corren en un navegador.
+![image](https://github.com/user-attachments/assets/27a3ff0b-410a-4128-adc2-1f1714e79533)
+ en un framework de test e2e, para testear aplicaciones que corren en un navegador.
 
 ### ¿Y pero ésto no es lo mismo que los test unitarios con jest? :thinking: :thinking: :thinking: 
 
 ¡No! la diferencia que tenemos con los test unitarios, es que estos solo testean los componentes por separado, en cambio acá nosotros levantamos un navegador y podemos testear cómo interactúan nuestros componentes entre sí, solo guiándonos por el HTML de nuestro sitio.
 
 ## Instalación :hammer_and_wrench: 
-Este desarrolo fue realizado en un entorno de OS debian ubuntu 22.04, python 3.11 en adelante, PostgreSQL con PgAdmin.
+Este desarrolo fue realizado en un entorno de `OS debian ubuntu 22.04`, `python 3.11` en adelante, `PostgreSQL` con `PgAdmin`.
 Tal cual nos explica en el [get-started](https://docs.cypress.io/guides/getting-started/installing-cypress.html#npm-install), instalamos la dependencia de cypress
-
 ```bash
 sudo apt update
 sudo apt install python3
+```
+```bash
 python3 --version
+```
+```bash
 python3 pip install pandas
 ```
 ```python
