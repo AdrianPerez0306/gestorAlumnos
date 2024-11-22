@@ -9,8 +9,7 @@ Contexto teorico. ![link](https://github.com/AdrianPerez0306/gestorAlumnos/blob/
 ¡No! la diferencia que tenemos con los test unitarios, es que estos solo testean los componentes por separado, en cambio acá nosotros levantamos un navegador y podemos testear cómo interactúan nuestros componentes entre sí, solo guiándonos por el HTML de nuestro sitio.
 
 ## Instalación :hammer_and_wrench: 
-Este desarrolo fue realizado en un entorno de `OS debian ubuntu 22.04`, `python 3.11` en adelante, `PostgreSQL` con `PgAdmin`.
-Tal cual nos explica en el [get-started](https://docs.cypress.io/guides/getting-started/installing-cypress.html#npm-install), instalamos la dependencia de cypress
+Este desarrolo fue realizado en un entorno de `OS debian ubuntu 22.04`, [`python 3.11`](https://www.pgadmin.org/) en adelante, [`PostgreSQL`](https://www.postgresql.org/) con [`PgAdmin`](https://www.pgadmin.org/).
 ```bash
 sudo apt update
 sudo apt install python3
@@ -24,7 +23,7 @@ python3 pip install pandas
 ```python
 import pandas
 ```
-Ahora le decimos a cypress que nos cree los archivos necesarios para comenzar a testear, tal como dice en la web podemos usar algunos de estos comandos
+Una vez tenemos todo instalado, ejecutamos los `script.py` para comenzar el preprocesado.
 
 
 Si es la primera vez que corremos el proyecto, nos va a crear un montón de ejemplos de cómo testear, en caso contrario nos va abre el ambiente de desarrollo de cypress que tiene la siguiente pinta:
