@@ -3,6 +3,8 @@ Contexto teorico. ![link](https://github.com/AdrianPerez0306/gestorAlumnos/blob/
 
 ## Instalación :hammer_and_wrench: 
 Este desarrolo fue realizado en un entorno de `OS debian ubuntu 22.04`, [`python 3.11`](https://www.pgadmin.org/) en adelante, [`PostgreSQL`](https://www.postgresql.org/) con [`PgAdmin`](https://www.pgadmin.org/).
+
+`Python on Ubuntu 22.04`
 ```bash
 sudo apt update
 sudo apt install python3
@@ -13,9 +15,19 @@ python3 --version
 ```bash
 python3 pip install pandas
 ```
-```python
-import pandas
+`PostgreSQL`
+Acorde a [`PostgreSQL`](https://www.postgresql.org/download/linux/ubuntu/):
+```bash
+sudo apt install -y postgresql-common
+sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh
 ```
+`PgAdmin`
+Acorde a [`PostgreSQL`](https://www.postgresql.org/download/linux/ubuntu/):
+```bash
+sudo apt install -y postgresql-common
+sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh
+```
+
 Una vez tenemos instalado `python`, podemos comenzar el preprocesado. Partiendo del archivo [`raw-data.csv`](preprocessing/raw-data.csv) tenemos labels/columnas de la siguiente forma:
 
 ![image](https://github.com/user-attachments/assets/27a3ff0b-410a-4128-adc2-1f1714e79533)
@@ -53,8 +65,13 @@ Con el server ya creado procedemos a utilizar la query tool que provee `PostgreS
 ![image](https://github.com/user-attachments/assets/7bc8605f-209c-4888-a69e-d092fec69446)
 ![image](https://github.com/user-attachments/assets/dc254c26-a05d-4f2e-af2e-e15b8c49ddc9)
 
-Una vez en el panel de querys, procedemos a ejecutar las querys.
+
 ##### b) Ejecutar querys.
+Una vez en el panel de querys, procedemos a ejecutar las querys. 
+i) Ejecutar todos los querys en el folder `procedures_calls`
+  `call_init` -> `call_load_column` -> `call_load_alumnos`
+  Aqui se puede ejecutar las querys de los respectivos archivos.
+  NOTA: Si quiere ejecutar las `procedures_calls` primero debe copiar los archivos dentro de `procedures` y ejecutarlos dentro de la query tool.
 ![image](https://github.com/user-attachments/assets/4b53691a-54c0-4a78-8cfc-3573c5f7b54d)
 
 
