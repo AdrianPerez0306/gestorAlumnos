@@ -1,1 +1,1 @@
-CALL public.init()
+CALL public.createInitialTables()
