@@ -1,8 +1,1 @@
-CALL public.csv_to_column('profesion', 'nombre', '/home/the14th/Downloads/profesiones.csv');
-CALL public.csv_to_column('localidad', 'nombre', '/home/the14th/Downloads/localidades.csv');
-CALL public.csv_to_column('musica', 'nombre', '/home/the14th/Downloads/musica.csv');
-CALL public.csv_to_column('series', 'nombre', '/home/the14th/Downloads/series.csv');
-CALL public.csv_to_column('hobby', 'nombre', '/home/the14th/Downloads/hobbies.csv');
-CALL public.csv_to_column('grupo', 'nombre', '/home/the14th/Downloads/grupos.csv');
-CALL public.csv_to_column('rol', 'nombre', '/home/the14th/Downloads/roles.csv');
-CALL public.csv_to_column('materia', 'nombre', '/home/the14th/Downloads/materias.csv');
+CALL public.init()
